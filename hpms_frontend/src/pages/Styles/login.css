@@ -1,0 +1,175 @@
+.login-container {
+  display: flex;
+  height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+}
+
+
+.login-left {
+  flex: 6;
+  background: linear-gradient(rgba(227, 242, 253, 0.85), rgba(227, 242, 253, 0.85)),
+              url("./../../../public/Images/hospital\ building.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  text-align: center;
+  color: #1a237e;
+}
+
+.overlay h1 {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.overlay p {
+  font-size: 18px;
+}
+
+
+.login-right {
+  flex: 4;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.login-card {
+  width: 85%;
+  max-width: 320px;
+}
+
+.logo {
+  font-size: 28px;
+  color: #1a237e;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: gray;
+  margin-bottom: 30px;
+}
+
+
+.input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+}
+
+.input-group label {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  color: gray;
+  font-size: 14px;
+  transition: 0.2s;
+  pointer-events: none;
+}
+
+.input-group input:focus + label,
+.input-group input:valid + label {
+  top: -8px;
+  left: 8px;
+  background: white;
+  padding: 0 4px;
+  font-size: 12px;
+  color: #1a237e;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1a237e;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: #3949ab;
+}
+@media (max-width: 768px) {
+  .login-card-container {
+    width: 95%;
+    height: auto;
+    flex-direction: column;
+  }
+  .login-left {
+    display: none;
+  }
+
+  .login-right {
+    flex: 1;
+    width: 100%;
+    padding: 20px;
+  }
+}
+.input-group {
+  position: relative;
+}
+
+.input-group .icon {
+  position: absolute;
+  right: -12px;
+  top: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: gray;
+}
+
+.input-group .toggle {
+  cursor: pointer;
+}
+.error-box {
+  background: #fdecea;
+  color: #b71c1c;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+.role-indicator {
+  margin-bottom: 15px;
+  font-size: 13px;
+  color: #1a237e;
+  background: #e3f2fd;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.login-btn:disabled {
+  background: #9fa8da;
+  cursor: not-allowed;
+}
+.login-wrapper {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+}
+.login-card-container {
+  display: flex;
+  width: 1100px;
+  height: 600px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
