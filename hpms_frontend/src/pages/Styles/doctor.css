@@ -1,6 +1,8 @@
 .doctor-container {
   display: flex;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   background: #f5f5f5;
 }
 
@@ -421,6 +423,87 @@ textarea {
   cursor: not-allowed;
 }
 
+.order-nurse-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px;
+  background: #0277bd;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.order-nurse-btn:hover:not(:disabled) {
+  background: #01579b;
+}
+
+.order-nurse-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rx-input-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.85fr 0.85fr 0.9fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 920px) {
+  .rx-input-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rx-input-grid input {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.rx-input-grid button {
+  margin: 0;
+  padding: 8px 12px;
+}
+
+.rx-order-row {
+  align-items: flex-start;
+}
+
+.rx-drug-line {
+  display: block;
+  font-weight: 600;
+}
+
+.rx-meta {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.prescribe-rx-btn {
+  padding: 4px 10px !important;
+  margin: 0 !important;
+  background: #2e7d32 !important;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.prescribe-rx-btn:hover:not(:disabled) {
+  background: #1b5e20 !important;
+}
+
+.prescribe-rx-btn:disabled {
+  opacity: 0.5;
+}
+
 .nurse-row {
   align-items: flex-start;
 }
@@ -475,4 +558,184 @@ textarea {
 .nurse-tag-DONE {
   background: #e8f5e9;
   color: #2e7d32;
+}
+
+/* —— Lab results (notifications + modal) —— */
+.lab-result-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  margin-left: 8px;
+  border-radius: 6px;
+  border: 1px solid #3949ab;
+  background: #fff;
+  color: #1a237e;
+  cursor: pointer;
+}
+
+.lab-result-btn-unread {
+  background: #ff5722;
+  color: #fff;
+  border-color: #e64a19;
+  font-weight: 700;
+  animation: lab-result-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes lab-result-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 87, 34, 0);
+  }
+}
+
+.doctor-lab-toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+
+.doctor-lab-toast {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+}
+
+.doctor-lab-toast.custom-alert.urgent {
+  background-color: #ff5722;
+  animation: doctor-lab-toast-blink 1s infinite;
+}
+
+@keyframes doctor-lab-toast-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0.78;
+  }
+}
+
+.doctor-lab-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #fff;
+  text-align: left;
+}
+
+.doctor-lab-toast-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.doctor-lab-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.doctor-lab-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.doctor-lab-modal {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  max-height: min(80vh, 640px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.doctor-lab-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.doctor-lab-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.doctor-lab-modal-x {
+  background: none;
+  border: none;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  color: #424242;
+}
+
+.doctor-lab-modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+
+.doctor-lab-result-block {
+  margin-bottom: 18px;
+}
+
+.doctor-lab-result-block h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: #1a237e;
+}
+
+.doctor-lab-empty {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.doctor-lab-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.doctor-lab-mini-table th,
+.doctor-lab-mini-table td {
+  border: 1px solid #e0e0e0;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.doctor-lab-mini-table th {
+  background: #f5f5f5;
 }

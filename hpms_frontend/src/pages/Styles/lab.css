@@ -1,0 +1,195 @@
+/* Urgent / success banners (same pattern as triage custom-alert) */
+.lab-banner.custom-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.lab-banner.custom-alert.success {
+  background-color: #4caf50;
+}
+
+.lab-banner.custom-alert.urgent {
+  background-color: #ff5722;
+  animation: lab-blink 1s infinite;
+}
+
+@keyframes lab-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0.75;
+  }
+}
+
+.lab-banner.custom-alert button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.lab-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: #f5f5f5;
+}
+
+.lab-main-row {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.lab-queue-error {
+  background: #ffebee;
+  color: #b71c1c;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  border: 1px solid #ffcdd2;
+}
+
+.lab-queue-empty {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+/* LEFT PANEL */
+.lab-left {
+  width: 30%;
+  background: white;
+  border-right: 1px solid #ddd;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+/* RIGHT PANEL */
+.lab-right {
+  width: 70%;
+  padding: 20px;
+  background: #fafafa;
+  overflow-y: auto;
+}
+.lab-card {
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fafafa;
+  border-left: 6px solid #9e9e9e;
+}
+
+.lab-card.active {
+  outline: 2px solid #1a237e;
+  background: #e8eaf6;
+}
+
+.lab-card-tests {
+  font-size: 13px;
+  color: #444;
+  margin: 4px 0 8px;
+}
+
+/* Triage priority (matches triage.models.Triage.PRIORITY_CHOICES) */
+.lab-card.CRITICAL {
+  border-left-color: #b71c1c;
+  animation: pulse 1.5s infinite;
+}
+
+.lab-card.URGENT {
+  border-left-color: #f44336;
+}
+
+.lab-card.MEDIUM {
+  border-left-color: #ff9800;
+}
+
+.lab-card.LOW {
+  border-left-color: #4caf50;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0px rgba(244,67,54,0.5); }
+  50% { box-shadow: 0 0 10px rgba(244,67,54,0.8); }
+  100% { box-shadow: 0 0 0px rgba(244,67,54,0.5); }
+}
+
+.status {
+  font-size: 12px;
+  color: #555;
+}
+.lab-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.lab-table th,
+.lab-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.lab-table input {
+  width: 80px;
+  padding: 5px;
+}
+
+.lab-table-merged .lab-td-test {
+  font-weight: 600;
+  color: #1a237e;
+  white-space: nowrap;
+}
+
+/* FLAGS */
+.high {
+  color: red;
+  font-weight: bold;
+}
+
+.low {
+  color: blue;
+  font-weight: bold;
+}
+.authorize-btn {
+  margin-top: 12px;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 14px;
+  background: #1a237e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.authorize-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lab-selected-test {
+  font-size: 1.05rem;
+  margin-top: 4px;
+}

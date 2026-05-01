@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import TopNav from "../components/TopNav";
 import "./Styles/reception.css";
 
 function splitDisplayName(full) {
@@ -147,6 +148,9 @@ export default function Reception() {
   };
 
   return (
+    <div className="hpms-shell">
+      <TopNav title="Reception" />
+      <div className="hpms-shell-content">
     <div className="reception-container">
       {toast && (
         <div className={`reception-toast ${toast.variant}`} role="status">
@@ -339,6 +343,8 @@ export default function Reception() {
             </button>
           </>
         )}
+      </div>
+    </div>
       </div>
     </div>
   );

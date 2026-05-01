@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./Styles/triage.css";
 import API from "../api/axios";
+import TopNav from "../components/TopNav";
 
 
 const VITAL_RANGES = {
@@ -316,6 +317,9 @@ function Triage() {
   ];
 
   return (
+    <div className="hpms-shell">
+      <TopNav title="Triage" />
+      <div className="hpms-shell-content">
     <div className="triage-container">
       {alertMessage && (
         <div className={`custom-alert ${alertType}`}>
@@ -515,6 +519,8 @@ function Triage() {
       <button type="button" className="submit-btn" onClick={handleSubmit}>
         COMMIT TO QUEUE
       </button>
+    </div>
+      </div>
     </div>
   );
 }

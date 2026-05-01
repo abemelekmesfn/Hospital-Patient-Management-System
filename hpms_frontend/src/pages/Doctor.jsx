@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Styles/doctor.css";
 import API from "../api/axios";
+import TopNav from "../components/TopNav";
 
 const LAB_PRESETS = ["CBC", "Urinalysis", "Blood Sugar"];
 
@@ -32,10 +33,88 @@ export default function Doctor() {
   const [localTasks, setLocalTasks] = useState([]);
 
   const [drugInput, setDrugInput] = useState("");
+  const [rxDosageInput, setRxDosageInput] = useState("");
+  const [rxFreqInput, setRxFreqInput] = useState("");
+  const [rxDurInput, setRxDurInput] = useState("");
   const [taskInput, setTaskInput] = useState("");
   const [labInput, setLabInput] = useState("");
 
   const [busy, setBusy] = useState(false);
+
+  const [labNotifications, setLabNotifications] = useState([]);
+  const [labModal, setLabModal] = useState(null);
+
+  const refreshVisit = useCallback(async (visitId) => {
+    const res = await API.get(`/doctor/visit/${visitId}/`);
+    setSelected(res.data);
+    return res.data;
+  }, []);
+
+  const fetchLabNotifications = useCallback(async () => {
+    if (!localStorage.getItem("access")) return;
+    try {
+      const res = await API.get("/doctor/lab-notifications/");
+      setLabNotifications(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchLabNotifications();
+    const t = setInterval(() => void fetchLabNotifications(), 5000);
+    return () => clearInterval(t);
+  }, [fetchLabNotifications]);
+
+  const openLabResultModal = async (visitId) => {
+    try {
+      const res = await API.get(`/doctor/visit/${visitId}/`);
+      const visit = res.data;
+      const orders = (visit.lab_orders || []).filter(
+        (lo) => lo.status === "COMPLETED" && lo.result
+      );
+      if (!orders.length) {
+        return;
+      }
+      setLabModal({ visit, orders });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const closeLabResultModal = async () => {
+    if (!labModal) return;
+    const { visit, orders } = labModal;
+    const idsToAck = orders
+      .filter((o) => !o.doctor_lab_result_modal_seen)
+      .map((o) => o.id);
+    try {
+      if (idsToAck.length) {
+        await API.post("/doctor/lab-results/acknowledge/", {
+          visit_id: visit.id,
+          order_ids: idsToAck,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    const vid = visit.id;
+    setLabModal(null);
+    await fetchLabNotifications();
+    if (selected?.id === vid) {
+      await refreshVisit(vid);
+    }
+  };
+
+  const dismissLabToast = async (orderId, e) => {
+    e.stopPropagation();
+    try {
+      await API.post(`/doctor/lab-notification/${orderId}/dismiss/`);
+      await fetchLabNotifications();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const appendExamTemplate = (template) => {
     setNotes((prev) => {
@@ -81,11 +160,12 @@ export default function Doctor() {
     return () => clearInterval(t);
   }, [fetchQueue, navigate]);
 
-  const refreshVisit = async (visitId) => {
-    const res = await API.get(`/doctor/visit/${visitId}/`);
-    setSelected(res.data);
-    return res.data;
-  };
+  useEffect(() => {
+    const visitId = selected?.id;
+    if (!visitId || !localStorage.getItem("access")) return undefined;
+    const t = setInterval(() => void refreshVisit(visitId), 5000);
+    return () => clearInterval(t);
+  }, [selected?.id, refreshVisit]);
 
   const handleSelect = async (id) => {
     try {
@@ -96,6 +176,9 @@ export default function Doctor() {
       setLocalTasks([]);
       setLabInput("");
       setDrugInput("");
+      setRxDosageInput("");
+      setRxFreqInput("");
+      setRxDurInput("");
       setTaskInput("");
       setNotes(data.consultation?.physical_exam ?? "");
       setDiagnosis(data.consultation?.diagnosis ?? "");
@@ -124,17 +207,17 @@ export default function Doctor() {
     );
   };
 
-  const postPrescriptions = async (visitId, drugs) => {
+  const rxPayload = (visitId, row) => ({
+    visit_id: visitId,
+    drug_name: typeof row === "string" ? row : row.drug_name,
+    dosage: typeof row === "string" ? "-" : row.dosage?.trim() || "-",
+    frequency: typeof row === "string" ? "-" : row.frequency?.trim() || "-",
+    duration: typeof row === "string" ? "-" : row.duration?.trim() || "-",
+  });
+
+  const postPrescriptions = async (visitId, rows) => {
     await Promise.all(
-      drugs.map((drug) =>
-        API.post("/doctor/prescription/", {
-          visit_id: visitId,
-          drug_name: drug,
-          dosage: "-",
-          frequency: "-",
-          duration: "-",
-        })
-      )
+      rows.map((row) => API.post("/doctor/prescription/", rxPayload(visitId, row)))
     );
   };
 
@@ -156,6 +239,58 @@ export default function Doctor() {
       physical_exam: notes,
       diagnosis,
     });
+  };
+
+  /** Sends staged nurse tasks to the nurse queue immediately. */
+  const handleOrderNurses = async () => {
+    if (!selected || !localTasks.length) return;
+    setBusy(true);
+    try {
+      await postNurseTasks(selected.id, localTasks);
+      setLocalTasks([]);
+      await refreshVisit(selected.id);
+      await fetchQueue();
+    } catch (err) {
+      console.error(err);
+      alert("Could not send nurse tasks.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePrescribeOne = async (row) => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      await API.post("/doctor/prescription/", rxPayload(selected.id, row));
+      setLocalPrescriptions((prev) => prev.filter((r) => r.key !== row.key));
+      await refreshVisit(selected.id);
+      await fetchQueue();
+    } catch (err) {
+      console.error(err);
+      alert("Could not save prescription.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addStagedPrescription = () => {
+    const drug = drugInput.trim();
+    if (!drug) return;
+    setLocalPrescriptions((p) => [
+      ...p,
+      {
+        key: crypto.randomUUID(),
+        drug_name: drug,
+        dosage: rxDosageInput.trim() || "-",
+        frequency: rxFreqInput.trim() || "-",
+        duration: rxDurInput.trim() || "-",
+      },
+    ]);
+    setDrugInput("");
+    setRxDosageInput("");
+    setRxFreqInput("");
+    setRxDurInput("");
   };
 
   /** Sends staged lab tests to the lab immediately (does not finalize the visit). */
@@ -222,6 +357,9 @@ export default function Doctor() {
       setLocalTasks([]);
       setLabInput("");
       setDrugInput("");
+      setRxDosageInput("");
+      setRxFreqInput("");
+      setRxDurInput("");
       setTaskInput("");
       await fetchQueue();
       alert("Visit completed and removed from your queue.");
@@ -284,12 +422,24 @@ export default function Doctor() {
     return "Pending";
   };
 
+  const rxAllergyHit = useMemo(() => {
+    const a = (selected?.patient?.allergies || "").trim().toLowerCase();
+    if (!a) return false;
+    if (drugInput.toLowerCase().includes(a)) return true;
+    return localPrescriptions.some((r) =>
+      (r.drug_name || "").toLowerCase().includes(a)
+    );
+  }, [selected?.patient?.allergies, drugInput, localPrescriptions]);
+
   const nurseStatusClass = (st) => {
     if (st === "DONE") return "nurse-status nurse-done";
     return "nurse-status nurse-pending";
   };
 
   return (
+    <div className="hpms-shell">
+      <TopNav title="Doctor" />
+      <div className="hpms-shell-content">
     <div className="doctor-container">
       <div className="doctor-left">
         <h3>Doctor Queue</h3>
@@ -508,6 +658,19 @@ export default function Doctor() {
                     <span className={`lab-tag lab-tag-${lo.status}`}>
                       {labStatusLabel(lo.status)}
                     </span>
+                    {lo.status === "COMPLETED" && lo.result && (
+                      <button
+                        type="button"
+                        className={
+                          lo.doctor_lab_result_modal_seen
+                            ? "lab-result-btn"
+                            : "lab-result-btn lab-result-btn-unread"
+                        }
+                        onClick={() => openLabResultModal(selected.id)}
+                      >
+                        Results
+                      </button>
+                    )}
                     {lo.status === "PENDING" && (
                       <button
                         type="button"
@@ -546,37 +709,51 @@ export default function Doctor() {
 
             <div className="card">
               <h4>Prescription</h4>
+              <p className="card-hint">
+                Enter drug, dosage, and frequency. Use Prescribe to send one
+                line to pharmacy now, or Add to stage for batch save.
+              </p>
 
-              <div className="input-row">
+              <div className="rx-input-grid">
                 <input
                   placeholder="Drug name"
                   value={drugInput}
                   onChange={(e) => setDrugInput(e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (drugInput.trim()) {
-                      setLocalPrescriptions((p) => [...p, drugInput.trim()]);
-                      setDrugInput("");
-                    }
-                  }}
-                >
+                <input
+                  placeholder="Dosage"
+                  value={rxDosageInput}
+                  onChange={(e) => setRxDosageInput(e.target.value)}
+                />
+                <input
+                  placeholder="Frequency"
+                  value={rxFreqInput}
+                  onChange={(e) => setRxFreqInput(e.target.value)}
+                />
+                <input
+                  placeholder="Duration (optional)"
+                  value={rxDurInput}
+                  onChange={(e) => setRxDurInput(e.target.value)}
+                />
+                <button type="button" onClick={addStagedPrescription}>
                   Add
                 </button>
               </div>
 
-              {selected.allergies &&
-                drugInput
-                  .toLowerCase()
-                  .includes(selected.allergies.toLowerCase()) && (
-                  <p className="warning">⚠️ Patient Allergy Detected!</p>
-                )}
+              {rxAllergyHit && (
+                <p className="warning">⚠️ Patient Allergy Detected!</p>
+              )}
 
               <ul className="order-list">
                 {(selected.prescriptions || []).map((p) => (
-                  <li key={p.id} className="order-row">
-                    <span className="order-label">{p.drug_name}</span>
+                  <li key={p.id} className="order-row rx-order-row">
+                    <span className="order-label">
+                      <span className="rx-drug-line">{p.drug_name}</span>
+                      <span className="rx-meta">
+                        {p.dosage || "—"} · {p.frequency || "—"}
+                        {p.duration && p.duration !== "-" ? ` · ${p.duration}` : ""}
+                      </span>
+                    </span>
                     <button
                       type="button"
                       className="remove-btn"
@@ -587,9 +764,23 @@ export default function Doctor() {
                   </li>
                 ))}
                 {localPrescriptions.map((p, i) => (
-                  <li key={`local-rx-${i}`} className="order-row">
-                    <span className="order-label">{p}</span>
+                  <li key={p.key} className="order-row rx-order-row">
+                    <span className="order-label">
+                      <span className="rx-drug-line">{p.drug_name}</span>
+                      <span className="rx-meta">
+                        {p.dosage} · {p.frequency}
+                        {p.duration && p.duration !== "-" ? ` · ${p.duration}` : ""}
+                      </span>
+                    </span>
                     <span className="lab-tag lab-tag-staged">Staged</span>
+                    <button
+                      type="button"
+                      className="prescribe-rx-btn"
+                      disabled={busy}
+                      onClick={() => handlePrescribeOne(p)}
+                    >
+                      Prescribe
+                    </button>
                     <button
                       type="button"
                       className="remove-btn"
@@ -666,10 +857,115 @@ export default function Doctor() {
                   </li>
                 ))}
               </ul>
+
+              <button
+                type="button"
+                className="order-nurse-btn"
+                disabled={busy || !localTasks.length}
+                onClick={handleOrderNurses}
+              >
+                Order nurses
+              </button>
             </div>
           </>
         )}
       </div>
+    </div>
+      </div>
+
+      {labNotifications.length > 0 && (
+        <div className="doctor-lab-toast-stack" aria-live="polite">
+          {labNotifications.map((n) => (
+            <div
+              key={n.id}
+              className="doctor-lab-toast custom-alert urgent"
+              role="button"
+              tabIndex={0}
+              onClick={() => openLabResultModal(n.visit_id)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && openLabResultModal(n.visit_id)
+              }
+            >
+              <div className="doctor-lab-toast-body">
+                <strong>New lab result</strong>
+                <span>
+                  {n.patient_name} — {n.test_name}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="doctor-lab-toast-close"
+                aria-label="Dismiss notification"
+                onClick={(e) => dismissLabToast(n.id, e)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {labModal && (
+        <div
+          className="doctor-lab-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="lab-result-title"
+        >
+          <div className="doctor-lab-backdrop" onClick={closeLabResultModal} />
+          <div className="doctor-lab-modal">
+            <div className="doctor-lab-modal-header">
+              <h2 id="lab-result-title">
+                Lab results — {labModal.visit.patient_name}
+              </h2>
+              <button
+                type="button"
+                className="doctor-lab-modal-x"
+                aria-label="Close"
+                onClick={closeLabResultModal}
+              >
+                ×
+              </button>
+            </div>
+            <div className="doctor-lab-modal-body">
+              {labModal.orders.map((lo) => {
+                let parsed = {};
+                try {
+                  parsed = lo.result ? JSON.parse(lo.result) : {};
+                } catch {
+                  parsed = { Raw: lo.result };
+                }
+                const entries = Object.entries(parsed);
+                return (
+                  <div key={lo.id} className="doctor-lab-result-block">
+                    <h4>{lo.test_name}</h4>
+                    {entries.length === 0 ? (
+                      <p className="doctor-lab-empty">No structured values.</p>
+                    ) : (
+                      <table className="doctor-lab-mini-table">
+                        <thead>
+                          <tr>
+                            <th>Parameter</th>
+                            <th>Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {entries.map(([k, v]) => (
+                            <tr key={k}>
+                              <td>{k}</td>
+                              <td>{String(v)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

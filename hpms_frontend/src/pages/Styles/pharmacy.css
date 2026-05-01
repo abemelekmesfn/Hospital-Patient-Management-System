@@ -1,0 +1,169 @@
+.pharmacy-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: #f5f5f5;
+  font-family: Arial, sans-serif;
+}
+
+.pharmacy-queue-error {
+  background: #ffebee;
+  color: #b71c1c;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  border: 1px solid #ffcdd2;
+}
+
+.pharmacy-queue-empty {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 12px;
+}
+
+/* LEFT PANEL */
+.pharmacy-left {
+  width: 30%;
+  background: white;
+  border-right: 1px solid #ddd;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+/* RIGHT PANEL */
+.pharmacy-right {
+  width: 70%;
+  padding: 20px;
+  background: #fafafa;
+}
+
+/* QUEUE CARD */
+.queue-card {
+  background: #fafafa;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border-left: 6px solid gray;
+}
+
+.queue-card.active {
+  outline: 2px solid #1a237e;
+  background: #e8eaf6;
+}
+
+.queue-card-meta {
+  font-size: 13px;
+  color: #555;
+  margin: 4px 0 6px;
+}
+
+.queue-card.CRITICAL {
+  border-left-color: #b71c1c;
+}
+
+.queue-card.URGENT {
+  border-left-color: #f44336;
+}
+
+.queue-card.MEDIUM {
+  border-left-color: #ff9800;
+}
+
+.queue-card.LOW {
+  border-left-color: #4caf50;
+}
+
+/* STATUS */
+.status {
+  font-size: 12px;
+}
+
+.status.new {
+  color: #1976d2;
+}
+
+/* HEADER */
+.dispense-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* PAYMENT */
+.payment.paid {
+  color: green;
+}
+
+/* ALLERGY ALERT */
+.allergy-alert {
+  background: #fff3cd;
+  padding: 10px;
+  margin: 15px 0;
+  border-left: 5px solid orange;
+}
+
+/* TABLE */
+.dispense-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dispense-table th,
+.dispense-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+/* LABEL BOX */
+.label-box {
+  margin-top: 20px;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+}
+
+/* BUTTON */
+.finalize-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background: #1a237e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.pharm-cell-input {
+  width: 100%;
+  min-width: 80px;
+  max-width: 160px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.rx-save-inline {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #1565c0;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.rx-save-inline:hover:not(:disabled) {
+  background: #0d47a1;
+}
+
+.rx-save-inline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

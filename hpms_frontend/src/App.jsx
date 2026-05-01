@@ -3,6 +3,9 @@ import Login from "./pages/Login";
 import Triage from "./pages/Triage";
 import Reception from "./pages/Reception";
 import Doctor from "./pages/Doctor";
+import Lab from "./pages/Lab";
+import Pharmacy from "./pages/Pharmacy";
+import Nurse from "./pages/Nurse";
 
 function App() {
   return (
@@ -12,6 +15,9 @@ function App() {
         <Route path="/triage" element={<Triage />} />
         <Route path="/reception" element={<Reception />} />
         <Route path="/doctor" element={<Doctor />} />
+        <Route path="/lab" element={<Lab />} />
+        <Route path="/pharmacy" element={<Pharmacy />} />
+        <Route path="/nurse" element={<Nurse />} />
       </Routes>
     </BrowserRouter>
   );

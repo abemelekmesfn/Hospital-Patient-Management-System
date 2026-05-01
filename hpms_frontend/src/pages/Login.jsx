@@ -42,6 +42,9 @@ function Login() {
       // Save tokens
       localStorage.setItem("access", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
+      if (response.data.user) {
+        localStorage.setItem("hpms_user", JSON.stringify(response.data.user));
+      }
 
       // Use role from backend response
       const userRole = response.data.user.role.toLowerCase();
@@ -51,76 +54,77 @@ function Login() {
         navigate("/doctor");
       } else if (userRole === "triage") {
         navigate("/triage");
+      } else if (userRole === "laboratory") {
+        navigate("/lab");
+      } else if (userRole === "pharmacist") {
+        navigate("/pharmacy");
+      } else if (userRole === "nurse") {
+        navigate("/nurse");
       } else {
         navigate("/reception");
       }
-
     } catch {
-      setError("Invalid credentials. Please contact your System Administrator.");
+      setError(
+        "Invalid credentials. Please contact your System Administrator.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-  <div className="login-wrapper">
-
-    <div className="login-card-container">
-
-      {/* LEFT IMAGE PANEL */}
-      <div className="login-left">
-        <div className="overlay">
-          <h1>Hospital Patient Management System</h1>
-          <p>Streamlining care for a healthier tomorrow.</p>
+    <div className="login-wrapper">
+      <div className="login-card-container">
+        {/* LEFT IMAGE PANEL */}
+        <div className="login-left">
+          <div className="overlay">
+            <h1>Hospital Patient Management System</h1>
+            <p>2018 E.C</p>
+          </div>
         </div>
-      </div>
 
-      {/* RIGHT FORM PANEL */}
-      <div className="login-right">
-        <div className="login-card">
+        {/* RIGHT FORM PANEL */}
+        <div className="login-right">
+          <div className="login-card">
+            <h2 className="logo">HPMS</h2>
+            <p className="subtitle">
+              Please sign in to your professional account
+            </p>
 
-          <h2 className="logo">HPMS</h2>
-          <p className="subtitle">Please sign in to your professional account</p>
+            {error && <div className="error-box">{error}</div>}
 
-          {error && <div className="error-box">{error}</div>}
-
-          <form className="login-form" onSubmit={handleLogin}>
-
-            <div className="input-group">
-              <input type="text" required onChange={handleUsernameChange} />
-              <label>Staff ID</label>
-              <span className="icon">👤</span>
-            </div>
-
-            {role && (
-              <div className="role-indicator">
-                Recognized as: <strong>{role}</strong>
+            <form className="login-form" onSubmit={handleLogin}>
+              <div className="input-group">
+                <input type="text" required onChange={handleUsernameChange} />
+                <label>Staff ID</label>
+                <span className="icon">👤</span>
               </div>
-            )}
 
-            <div className="input-group">
-              <input type={showPassword ? "text" : "password"} required />
-              <label>Password</label>
-              <span
-                className="icon toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "🙈" : "👁️"}
-              </span>
-            </div>
+              {role && (
+                <div className="role-indicator">
+                  Recognized as: <strong>{role}</strong>
+                </div>
+              )}
 
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? "Authenticating..." : "Secure Login"}
-            </button>
+              <div className="input-group">
+                <input type={showPassword ? "text" : "password"} required />
+                <label>Password</label>
+                <span
+                  className="icon toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </span>
+              </div>
 
-          </form>
-
+              <button type="submit" className="login-btn" disabled={loading}>
+                {loading ? "Authenticating..." : "Secure Login"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-
     </div>
-
-  </div>
   );
 }
 
