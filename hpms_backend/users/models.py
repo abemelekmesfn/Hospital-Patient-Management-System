@@ -17,5 +17,10 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
 
+    def save(self, *args, **kwargs):
+        if self.role == "ADMIN":
+            self.is_active = True
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.username} - {self.role}"

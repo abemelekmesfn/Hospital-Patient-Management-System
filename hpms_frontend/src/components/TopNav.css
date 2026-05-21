@@ -36,6 +36,15 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex-shrink: 0;
+}
+
+.hpms-topnav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  min-width: 0;
 }
 
 .hpms-brand {

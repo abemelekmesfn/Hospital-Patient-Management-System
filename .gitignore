@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+*.sqlite3
+db.sqlite3
+
+# Windows reserved device names (accidental files break git add)
+nul
+con
+prn
+aux
+com1
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Frontend build (hpms_frontend has its own .gitignore too)
+hpms_frontend/node_modules/
+hpms_frontend/dist/

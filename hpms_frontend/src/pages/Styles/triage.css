@@ -14,7 +14,7 @@
 }
 .header-row {
   display: flex;
-  gap: 15px;
+  gap: 20px;
   margin-bottom: 15px;
 }
 .field-group {
@@ -40,6 +40,21 @@ input {
   font-size: 14px;
   color: #212121;
 }
+
+/* Patient name autocomplete — same footprint as a normal header input */
+.triage-header .field-group.large .hpms-patient-ac {
+  width: 100%;
+  min-width: 0;
+}
+
+.triage-header .field-group.large .hpms-patient-ac input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.triage-header .hpms-patient-ac-hint {
+  display: none;
+}
 .toggle-group {
   display: flex;
   gap: 5px;
@@ -52,10 +67,12 @@ input {
   background: white;
   cursor: pointer;
   border-radius: 6px;
+  color: #1a1a1a;
 }
 
 .toggle-group button:hover {
   background: #e3f2fd;
+  color: #1a1a1a;
 }
 .arrival-icons {
   display: flex;

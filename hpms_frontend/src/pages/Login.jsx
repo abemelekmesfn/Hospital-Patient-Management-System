@@ -8,18 +8,25 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [role, setRole] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  // Fake role detection (we'll connect API later)
   const handleUsernameChange = (e) => {
     const value = e.target.value;
+    setUsername(value);
 
-    if (value.toLowerCase().includes("doc")) {
+    const lower = value.toLowerCase();
+    if (lower.includes("admin")) {
+      setRole("Admin");
+    } else if (lower.includes("doc")) {
       setRole("Doctor");
-    } else if (value.toLowerCase().includes("nurse")) {
+    } else if (lower.includes("nurse")) {
       setRole("Nurse");
-    } else if (value.toLowerCase().includes("rec")) {
+    } else if (lower.includes("rec")) {
       setRole("Reception");
+    } else if (lower.includes("triage")) {
+      setRole("Triage");
     } else {
       setRole("");
     }
@@ -30,13 +37,19 @@ function Login() {
     setError("");
     setLoading(true);
 
-    const username = e.target[0].value;
-    const password = e.target[1].value;
+    const user = username.trim();
+    const pass = password;
+
+    if (!user || !pass) {
+      setError("Enter both Staff ID and password.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await API.post("login/", {
-        username,
-        password,
+        username: user,
+        password: pass,
       });
 
       // Save tokens
@@ -60,13 +73,26 @@ function Login() {
         navigate("/pharmacy");
       } else if (userRole === "nurse") {
         navigate("/nurse");
+      } else if (userRole === "admin") {
+        navigate("/admin");
+      } else if (userRole === "cashier") {
+        navigate("/cashier");
+      } else if (userRole === "reception") {
+        navigate("/reception");
       } else {
         navigate("/reception");
       }
-    } catch {
-      setError(
-        "Invalid credentials. Please contact your System Administrator.",
-      );
+    } catch (err) {
+      const data = err.response?.data;
+      const msg =
+        (typeof data === "string" && data) ||
+        data?.error ||
+        data?.detail ||
+        (err.code === "ERR_NETWORK"
+          ? "Cannot reach the server. Is the backend running on port 8000?"
+          : null) ||
+        "Invalid credentials. Check username and password.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -95,7 +121,14 @@ function Login() {
 
             <form className="login-form" onSubmit={handleLogin}>
               <div className="input-group">
-                <input type="text" required onChange={handleUsernameChange} />
+                <input
+                  type="text"
+                  name="username"
+                  value={username}
+                  required
+                  autoComplete="username"
+                  onChange={handleUsernameChange}
+                />
                 <label>Staff ID</label>
                 <span className="icon">👤</span>
               </div>
@@ -107,7 +140,14 @@ function Login() {
               )}
 
               <div className="input-group">
-                <input type={showPassword ? "text" : "password"} required />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={password}
+                  required
+                  autoComplete="current-password"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
                 <label>Password</label>
                 <span
                   className="icon toggle"

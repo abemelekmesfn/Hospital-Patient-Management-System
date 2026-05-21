@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./Styles/triage.css";
 import API from "../api/axios";
 import TopNav from "../components/TopNav";
+import PatientNameAutocomplete from "../components/PatientNameAutocomplete";
 
 
 const VITAL_RANGES = {
@@ -31,6 +32,7 @@ function parseBloodPressure(raw) {
 
 function Triage() {
   const [patientName, setPatientName] = useState("");
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [age, setAge] = useState("");
   const [sex, setSex] = useState("");
   const [arrivalMode, setArrivalMode] = useState("");
@@ -183,6 +185,25 @@ function Triage() {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertType, setAlertType] = useState("");
 
+  const applyPatientAutofill = async (patient) => {
+    if (!patient?.id) {
+      setSelectedPatientId(null);
+      return;
+    }
+    setSelectedPatientId(patient.id);
+    try {
+      const res = await API.get(`patients/${patient.id}/autofill/`);
+      const d = res.data;
+      if (d.full_name) setPatientName(d.full_name);
+      if (d.age != null) setAge(String(d.age));
+      if (d.sex_display) setSex(d.sex_display);
+    } catch {
+      if (patient.age != null) setAge(String(patient.age));
+      if (patient.sex === "MALE") setSex("Male");
+      else if (patient.sex === "FEMALE") setSex("Female");
+    }
+  };
+
   const playAlert = () => {
     setAlertMessage("🚨 IMMEDIATE PRIORITY - ALERT DOCTORS!");
     setAlertType("urgent");
@@ -212,14 +233,18 @@ function Triage() {
     }
 
     try {
-      let patientId = null;
+      let patientId = selectedPatientId;
 
-      const searchResp = await API.get(
-        `patients/search/?q=${encodeURIComponent(patientName)}`,
-      );
-      if (Array.isArray(searchResp.data) && searchResp.data.length > 0) {
-        patientId = searchResp.data[0].id;
-      } else {
+      if (!patientId) {
+        const searchResp = await API.get(
+          `patients/search/?q=${encodeURIComponent(patientName)}`,
+        );
+        if (Array.isArray(searchResp.data) && searchResp.data.length > 0) {
+          patientId = searchResp.data[0].id;
+        }
+      }
+
+      if (!patientId) {
         const sexCode =
           sex === "Male" ? "MALE" : sex === "Female" ? "FEMALE" : "MALE";
         const createResp = await API.post("patients/quick-add/", {
@@ -264,6 +289,7 @@ function Triage() {
         }
 
         setPatientName("");
+        setSelectedPatientId(null);
         setAge("");
         setSex("");
         setArrivalMode("");
@@ -333,11 +359,17 @@ function Triage() {
       <div className="triage-header">
         <div className="header-row">
           <div className="field-group large">
-            <input
-              type="text"
-              placeholder="Search or Enter Patient Name..."
+            <PatientNameAutocomplete
               value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
+              onChange={(v) => {
+                setPatientName(v);
+                if (!v.trim()) setSelectedPatientId(null);
+              }}
+              onSelect={(p) => {
+                if (p) void applyPatientAutofill(p);
+                else setSelectedPatientId(null);
+              }}
+              placeholder="Search or Enter Patient Name..."
             />
           </div>
 

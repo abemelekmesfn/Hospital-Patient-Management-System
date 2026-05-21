@@ -1,4 +1,14 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+
 from .models import User
 
-admin.site.register(User)
+
+@admin.register(User)
+class UserAdmin(DjangoUserAdmin):
+    fieldsets = DjangoUserAdmin.fieldsets + (
+        (None, {"fields": ("role",)}),
+    )
+    add_fieldsets = DjangoUserAdmin.add_fieldsets + (
+        (None, {"fields": ("role",)}),
+    )

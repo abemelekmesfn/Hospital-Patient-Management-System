@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 from patients.models import Patient
 from datetime import datetime
@@ -8,7 +10,12 @@ class Visit(models.Model):
         ('WAITING_RECEPTION', 'Waiting Reception'),
         ('WAITING_DOCTOR', 'Waiting Doctor'),
         ('IN_CONSULTATION', 'In Consultation'),
-        ('COMPLETED', 'Completed'),
+        ("WAITING_LAB_RESULTS", "Waiting Lab Results"),
+        ("LAB_RESULTS_READY", "Lab Results Ready"),
+        ("WAITING_PHARMACY", "Waiting Pharmacy"),
+        ("CONSULTATION_COMPLETED", "Consultation Completed"),
+        ("ADMITTED", "Admitted"),
+        ("DISCHARGED", "Discharged"),
     )
 
     ARRIVAL_MODE = (
@@ -52,27 +59,49 @@ class Visit(models.Model):
         auto_now_add=True
     )
 
+    doctor = models.ForeignKey(
+        "users.User",   # Your custom user model
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="doctor_visits",
+        help_text="Doctor currently handling this visit"
+    )
+
+    # 2. Admission status
+    is_admitted = models.BooleanField(
+        default=False,
+        help_text="If True, the patient is admitted to a bed and stays in ongoing care"
+    )
+
     def __str__(self):
         return f"Visit {self.id} - {self.patient}"
-    def generate_registration_number(self):
 
-        year = datetime.now().year
+    @classmethod
+    def allocate_next_registration_number(cls, year=None):
+        """
+        Next REG-{year}-{seq} where seq is one greater than the max existing
+        suffix for that year. Avoids duplicates from ordering by id or string sort.
+        """
+        year = year or datetime.now().year
+        prefix = f"REG-{year}-"
+        qs = (
+            cls.objects.filter(registration_number__startswith=prefix)
+            .exclude(registration_number__isnull=True)
+            .exclude(registration_number="")
+        )
+        max_seq = 0
+        pat = re.compile(rf"^{re.escape(prefix)}(\d+)$")
+        for reg in qs.values_list("registration_number", flat=True):
+            m = pat.match(reg or "")
+            if m:
+                max_seq = max(max_seq, int(m.group(1)))
+        return f"{prefix}{str(max_seq + 1).zfill(4)}"
 
-        last_visit = Visit.objects.filter(
-            registration_number__startswith=f"REG-{year}"
-        ).order_by("registration_number").last()
-
-        if last_visit:
-            last_number = int(last_visit.registration_number.split("-")[-1])
-            new_number = last_number + 1
-        else:
-            new_number = 1
-
-        return f"REG-{year}-{str(new_number).zfill(4)}"
     def save(self, *args, **kwargs):
 
         if not self.registration_number and self.status == "WAITING_DOCTOR":
-            self.registration_number = self.generate_registration_number()
+            self.registration_number = self.allocate_next_registration_number()
 
         super().save(*args, **kwargs)
 
@@ -139,6 +168,13 @@ class Triage(models.Model):
     respiratory_rate = models.IntegerField()
 
     chief_complaint = models.TextField()
+
+    triage_patient_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Name entered at triage (before formal registration)",
+    )
 
     priority = models.CharField(
         max_length=20,

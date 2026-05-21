@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "./Styles/doctor.css";
 import API from "../api/axios";
 import TopNav from "../components/TopNav";
+import NavPatientSearch from "../components/NavPatientSearch";
+import PatientHistoryView from "../components/PatientHistoryView";
 
 const LAB_PRESETS = ["CBC", "Urinalysis", "Blood Sugar"];
 
@@ -43,6 +45,7 @@ export default function Doctor() {
 
   const [labNotifications, setLabNotifications] = useState([]);
   const [labModal, setLabModal] = useState(null);
+  const [historyPatientId, setHistoryPatientId] = useState(null);
 
   const refreshVisit = useCallback(async (visitId) => {
     const res = await API.get(`/doctor/visit/${visitId}/`);
@@ -438,8 +441,22 @@ export default function Doctor() {
 
   return (
     <div className="hpms-shell">
-      <TopNav title="Doctor" />
+      <TopNav
+        title="Doctor"
+        center={
+          <NavPatientSearch
+            onSelect={(p) => setHistoryPatientId(p?.id ?? null)}
+          />
+        }
+      />
       <div className="hpms-shell-content">
+      {historyPatientId ? (
+        <PatientHistoryView
+          patientId={historyPatientId}
+          variant="clinical"
+          onBack={() => setHistoryPatientId(null)}
+        />
+      ) : (
     <div className="doctor-container">
       <div className="doctor-left">
         <h3>Doctor Queue</h3>
@@ -871,9 +888,9 @@ export default function Doctor() {
         )}
       </div>
     </div>
-      </div>
+      )}
 
-      {labNotifications.length > 0 && (
+      {labNotifications.length > 0 && !historyPatientId && (
         <div className="doctor-lab-toast-stack" aria-live="polite">
           {labNotifications.map((n) => (
             <div
@@ -905,7 +922,7 @@ export default function Doctor() {
         </div>
       )}
 
-      {labModal && (
+      {labModal && !historyPatientId && (
         <div
           className="doctor-lab-overlay"
           role="dialog"
@@ -966,6 +983,7 @@ export default function Doctor() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

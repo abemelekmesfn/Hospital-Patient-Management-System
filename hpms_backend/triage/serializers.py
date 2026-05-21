@@ -12,5 +12,6 @@ class TriageSerializer(serializers.ModelSerializer):
             "pulse",
             "respiratory_rate",
             "chief_complaint",
-            "priority"
+            "priority",
+            "triage_patient_name",
         ]

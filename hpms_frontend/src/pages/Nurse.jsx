@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import TopNav from "../components/TopNav";
+import NavPatientSearch from "../components/NavPatientSearch";
+import PatientHistoryView from "../components/PatientHistoryView";
 import "./Styles/nurse.css";
 
 function priorityClass(p) {
@@ -22,6 +24,7 @@ export default function Nurse() {
   const [vTemp, setVTemp] = useState("");
   const [vRR, setVRR] = useState("");
   const [vitalsVisitId, setVitalsVisitId] = useState(null);
+  const [historyPatientId, setHistoryPatientId] = useState(null);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -147,8 +150,22 @@ export default function Nurse() {
 
   return (
     <div className="hpms-shell">
-      <TopNav title="Nurse" />
+      <TopNav
+        title="Nurse"
+        center={
+          <NavPatientSearch
+            onSelect={(p) => setHistoryPatientId(p?.id ?? null)}
+          />
+        }
+      />
       <div className="hpms-shell-content">
+        {historyPatientId ? (
+          <PatientHistoryView
+            patientId={historyPatientId}
+            variant="clinical"
+            onBack={() => setHistoryPatientId(null)}
+          />
+        ) : (
         <div className="nurse-container">
           <div className="nurse-left">
             <h3>Work queue</h3>
@@ -251,8 +268,9 @@ export default function Nurse() {
             )}
           </div>
         </div>
+        )}
 
-        {vitalsOpen && (
+        {vitalsOpen && !historyPatientId && (
           <div className="nurse-vitals-overlay" role="dialog" aria-modal="true">
             <div
               className="nurse-vitals-backdrop"

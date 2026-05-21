@@ -1,0 +1,245 @@
+.ph-view {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.ph-view-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  gap: 16px;
+}
+
+.ph-loading,
+.ph-error,
+.ph-empty {
+  color: #455a64;
+  font-size: 15px;
+}
+
+.ph-error {
+  color: #c62828;
+}
+
+.ph-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ph-title {
+  margin: 0;
+  font-size: 22px;
+  color: #1a237e;
+  font-weight: 700;
+}
+
+.ph-back-btn {
+  border: 1px solid #c5cae9;
+  background: #fff;
+  color: #1a237e;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.ph-back-btn:hover {
+  background: #e8eaf6;
+}
+
+.ph-patient-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(26, 35, 126, 0.08);
+  border: 1px solid #e8eaf6;
+}
+
+.ph-patient-card h3 {
+  margin: 0 0 14px;
+  color: #1a237e;
+  font-size: 20px;
+}
+
+.ph-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px 20px;
+  margin: 0;
+}
+
+.ph-details-grid dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5c6bc0;
+  margin: 0 0 4px;
+}
+
+.ph-details-grid dd {
+  margin: 0;
+  font-size: 15px;
+  color: #263238;
+  font-weight: 600;
+}
+
+.ph-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ph-visit-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  border: 1px solid #e8eaf6;
+  box-shadow: 0 2px 10px rgba(26, 35, 126, 0.06);
+}
+
+.ph-visit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eceff1;
+}
+
+.ph-visit-head h4 {
+  margin: 0 0 4px;
+  color: #1a237e;
+  font-size: 16px;
+}
+
+.ph-visit-meta {
+  margin: 0;
+  font-size: 13px;
+  color: #607d8b;
+}
+
+.ph-doctor-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3949ab;
+  background: #e8eaf6;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.ph-section {
+  margin-bottom: 14px;
+}
+
+.ph-section h5 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #3949ab;
+}
+
+.ph-section p {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #37474f;
+  line-height: 1.45;
+}
+
+.ph-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ph-priority-CRITICAL {
+  background: #ffcdd2;
+  color: #b71c1c;
+}
+.ph-priority-URGENT {
+  background: #ffe0b2;
+  color: #e65100;
+}
+.ph-priority-MEDIUM {
+  background: #fff9c4;
+  color: #f57f17;
+}
+.ph-priority-LOW {
+  background: #c8e6c9;
+  color: #2e7d32;
+}
+
+.ph-vitals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 13px;
+  color: #546e7a;
+}
+
+.ph-notes-block pre {
+  margin: 8px 0 0;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  font-family: inherit;
+  color: #37474f;
+}
+
+.ph-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  color: #37474f;
+}
+
+.ph-list li {
+  margin-bottom: 6px;
+}
+
+.ph-result {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #455a64;
+}
+
+.ph-invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.ph-invoice-table th,
+.ph-invoice-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eceff1;
+}
+
+.ph-invoice-table th {
+  color: #5c6bc0;
+  font-weight: 600;
+}
+
+.ph-muted p {
+  color: #90a4ae;
+  font-style: italic;
+}

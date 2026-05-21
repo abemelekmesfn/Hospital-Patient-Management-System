@@ -23,7 +23,7 @@ function formatRole(role) {
  * Top bar: page title + signed-in identity + logout.
  * Backend `UserSerializer` exposes `username`, `first_name`, `last_name`, `role`.
  */
-export default function TopNav({ title }) {
+export default function TopNav({ title, center }) {
   const navigate = useNavigate();
   const user = useMemo(() => readStoredUser(), []);
 
@@ -54,6 +54,8 @@ export default function TopNav({ title }) {
         </div>
         <div className="hpms-page-title">{title}</div>
       </div>
+
+      {center ? <div className="hpms-topnav-center">{center}</div> : null}
 
       <div className="hpms-topnav-right">
         <div className="hpms-user-block" title={primaryName}>

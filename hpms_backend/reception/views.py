@@ -1,17 +1,20 @@
-from django.shortcuts import render
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from triage.models import Visit
+from triage.models import Visit, Triage
 from .serializers import ReceptionQueueSerializer
 from django.shortcuts import get_object_or_404
 from .serializers import VisitDetailSerializer
 from .serializers import FinalizeRegistrationSerializer
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def reception_queue(request):
 
+    visit_ids_with_triage = Triage.objects.values_list("visit_id", flat=True)
     visits = Visit.objects.filter(
-        status="WAITING_RECEPTION"
+        status="WAITING_RECEPTION",
+        id__in=visit_ids_with_triage,
     ).select_related(
         "patient",
         "triage"
@@ -22,6 +25,7 @@ def reception_queue(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def visit_detail(request, visit_id):
 
     visit = get_object_or_404(
@@ -37,6 +41,7 @@ def visit_detail(request, visit_id):
     return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def finalize_registration(request):
 
     serializer = FinalizeRegistrationSerializer(data=request.data)
@@ -51,18 +56,3 @@ def finalize_registration(request):
         })
 
     return Response(serializer.errors, status=400)
-
-    triage = Triage.objects.get(id=triage_id)
-
-    # Check if patient exists
-    if triage.patient:
-        patient = triage.patient
-    else:
-        # Create a new Patient from Quick Add
-        patient = Patient.objects.create(
-            full_name=request.data.get('full_name', 'Unknown'),
-            sex=request.data.get('sex', 'Unknown'),
-            date_of_birth=request.data.get('dob', None)
-        )
-        triage.patient = patient
-        triage.save()

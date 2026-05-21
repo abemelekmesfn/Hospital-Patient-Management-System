@@ -8,7 +8,7 @@
 .login-left {
   flex: 6;
   background: linear-gradient(rgba(227, 242, 253, 0.85), rgba(227, 242, 253, 0.85)),
-              url("./../../../public/Images/hospital\ building.jpg");
+              url("/Images/hospital building.jpg");
   background-size: cover;
   background-position: center;
   display: flex;

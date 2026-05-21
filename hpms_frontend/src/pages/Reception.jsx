@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import TopNav from "../components/TopNav";
+import PatientNameAutocomplete from "../components/PatientNameAutocomplete";
 import "./Styles/reception.css";
 
 function splitDisplayName(full) {
@@ -79,6 +80,8 @@ export default function Reception() {
     }
   };
 
+  const [patientSearchQuery, setPatientSearchQuery] = useState("");
+
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -96,6 +99,33 @@ export default function Reception() {
       ...form,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const applyReturningPatient = async (patient) => {
+    if (!patient?.id) return;
+    try {
+      const res = await API.get(`patients/${patient.id}/autofill/`);
+      const d = res.data;
+      const names = splitDisplayName(d.full_name || "");
+      const arrivalFromTriage = d.triage?.arrival_mode || "";
+      setForm((prev) => ({
+        ...prev,
+        first_name: names.first_name || d.first_name || prev.first_name,
+        last_name: names.last_name || d.last_name || prev.last_name,
+        phone: d.phone || prev.phone,
+        date_of_birth: d.date_of_birth
+          ? String(d.date_of_birth).slice(0, 10)
+          : prev.date_of_birth,
+        arrival_mode: arrivalFromTriage || prev.arrival_mode,
+      }));
+      if (d.pending_visit_id) {
+        const inQueue = queue.find((p) => p.id === d.pending_visit_id);
+        if (inQueue) await handleSelect(d.pending_visit_id);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Could not load patient details.", "error");
+    }
   };
 
   const isValid =
@@ -130,6 +160,7 @@ export default function Reception() {
       setQueue((prev) => prev.filter((p) => p.id !== selected.id));
 
       setSelected(null);
+      setPatientSearchQuery("");
       setForm({
         first_name: "",
         last_name: "",
@@ -216,6 +247,24 @@ export default function Reception() {
         ) : (
           <>
             <h2>Patient registration</h2>
+
+            <div className="form-group reception-patient-search">
+              <label>
+                Search returning patient
+                <span className="label-hint">
+                  Type to find a previous patient; fields fill from triage when available
+                </span>
+              </label>
+              <PatientNameAutocomplete
+                value={patientSearchQuery}
+                onChange={setPatientSearchQuery}
+                onSelect={(p) => {
+                  if (p) void applyReturningPatient(p);
+                  setPatientSearchQuery("");
+                }}
+                placeholder="Search patient name or ID..."
+              />
+            </div>
 
             <div className="form-group">
               <label>Triage category</label>
