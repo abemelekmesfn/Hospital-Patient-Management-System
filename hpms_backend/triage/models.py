@@ -8,6 +8,7 @@ class Visit(models.Model):
 
     STATUS_CHOICES = (
         ('WAITING_RECEPTION', 'Waiting Reception'),
+        ('WAITING_CASHIER', 'Waiting Cashier'),
         ('WAITING_DOCTOR', 'Waiting Doctor'),
         ('IN_CONSULTATION', 'In Consultation'),
         ("WAITING_LAB_RESULTS", "Waiting Lab Results"),
@@ -72,6 +73,11 @@ class Visit(models.Model):
     is_admitted = models.BooleanField(
         default=False,
         help_text="If True, the patient is admitted to a bed and stays in ongoing care"
+    )
+
+    billing_deferred = models.BooleanField(
+        default=False,
+        help_text="Emergency: services proceed; payment collected before discharge.",
     )
 
     def __str__(self):

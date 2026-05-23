@@ -9,6 +9,7 @@ import AdminUsersPanel from "./admin/AdminUsersPanel";
 import AdminAnalyticsPanel from "./admin/AdminAnalyticsPanel";
 import AdminAuditPanel from "./admin/AdminAuditPanel";
 import AdminInventoryPanel from "./admin/AdminInventoryPanel";
+import AdminServicesPanel from "./admin/AdminServicesPanel";
 import "./Styles/admin.css";
 
 export default function Admin() {
@@ -21,6 +22,7 @@ export default function Admin() {
   const [logs, setLogs] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [inventory, setInventory] = useState(null);
+  const [services, setServices] = useState([]);
 
   const [loading, setLoading] = useState({
     dashboard: true,
@@ -28,6 +30,7 @@ export default function Admin() {
     analytics: true,
     audit: true,
     inventory: true,
+    services: true,
   });
   const [togglingId, setTogglingId] = useState(null);
   const [creatingUser, setCreatingUser] = useState(false);
@@ -60,6 +63,11 @@ export default function Admin() {
   const fetchInventory = useCallback(async () => {
     const res = await API.get("/admin/inventory/");
     setInventory(res.data);
+  }, []);
+
+  const fetchServices = useCallback(async () => {
+    const res = await API.get("/billing/services/");
+    setServices(Array.isArray(res.data) ? res.data : []);
   }, []);
 
   useEffect(() => {
@@ -177,6 +185,24 @@ export default function Admin() {
     };
   }, [activeSection, fetchInventory]);
 
+  useEffect(() => {
+    if (activeSection !== "services") return;
+    let cancelled = false;
+    (async () => {
+      setLoad("services", true);
+      try {
+        await fetchServices();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setLoad("services", false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection, fetchServices]);
+
   const handleNavigate = (section) => {
     setHistoryPatientId(null);
     setActiveSection(section);
@@ -252,6 +278,7 @@ export default function Admin() {
     analytics: "Analytics",
     audit: "Audit Logs",
     inventory: "Inventory",
+    services: "Services & Fees",
   };
 
   const renderWorkspace = () => {
@@ -297,6 +324,14 @@ export default function Admin() {
             onUpdate={updateInventory}
             onDelete={deleteInventory}
             saving={inventorySaving}
+          />
+        );
+      case "services":
+        return (
+          <AdminServicesPanel
+            services={services}
+            loading={loading.services}
+            onRefresh={fetchServices}
           />
         );
       default:

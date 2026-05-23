@@ -65,10 +65,13 @@ def create_triage(request):
             patient.is_unknown = False
             patient.save()
 
-        Triage.objects.update_or_create(
+        triage_obj, _ = Triage.objects.update_or_create(
             visit=visit,
             defaults=serializer.validated_data,
         )
+        if triage_obj.priority in ("CRITICAL", "URGENT"):
+            visit.billing_deferred = True
+            visit.save(update_fields=["billing_deferred"])
         return Response(
             {
                 "message": "Triage recorded successfully",

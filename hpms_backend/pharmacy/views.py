@@ -1,10 +1,13 @@
+from decimal import Decimal
+
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from billing import services as billing_services
+from billing.serializers import PharmacySaleSerializer
 from doctor.models import Prescription
 
 from .serializers import PharmacyQueueSerializer
@@ -23,6 +26,36 @@ class PharmacyQueueView(APIView):
         return Response(serializer.data)
 
 
+class PrescriptionQuoteView(APIView):
+    """Price quote before dispense (ETB)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        item = get_object_or_404(Prescription, pk=pk)
+        if item.pharmacy_status != "PENDING":
+            return Response(
+                {"detail": "Prescription is not pending."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        sale = billing_services.create_pharmacy_sale_for_prescription(item, request.user)
+        patient = item.visit.patient
+        return Response(
+            {
+                "sale_id": sale.id,
+                "drug_name": item.drug_name,
+                "subtotal": str(sale.subtotal),
+                "insurance_amount": str(sale.insurance_amount),
+                "patient_amount": str(sale.patient_amount),
+                "total": str(sale.total),
+                "status": sale.status,
+                "currency": "ETB",
+                "insurance_type": patient.insurance_type,
+                "billing_exempt": patient.billing_exempt,
+            }
+        )
+
+
 class DispenseDrugView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -33,10 +66,27 @@ class DispenseDrugView(APIView):
                 {"detail": "This prescription is not pending."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        item.pharmacy_status = "DISPENSED"
-        item.dispensed_at = timezone.now()
-        item.save(update_fields=["pharmacy_status", "dispensed_at"])
-        return Response({"message": "Drug dispensed"})
+
+        payment_method = request.data.get("payment_method")
+        sale = billing_services.create_pharmacy_sale_for_prescription(item, request.user)
+
+        if sale.status == "WAIVED":
+            billing_services.complete_waived_pharmacy_sale(sale.id, request.user)
+            return Response({"message": "Dispensed (billing waived).", "receipt": None})
+
+        if not payment_method:
+            return Response(
+                {
+                    "detail": "payment_method required (CASH, BANK_TRANSFER, TELEBIRR, INSURANCE).",
+                    "sale_id": sale.id,
+                    "amount_due": str(sale.patient_amount),
+                    "currency": "ETB",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        receipt = billing_services.pay_pharmacy_sale(sale.id, payment_method, request.user)
+        return Response({"message": "Drug dispensed and payment recorded.", "receipt": receipt})
 
 
 class PharmacistPrescriptionPatchView(APIView):

@@ -174,12 +174,29 @@ class FinalizeRegistrationSerializer(serializers.ModelSerializer):
     kin_phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
     kin_relationship = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
+    insurance_type = serializers.ChoiceField(
+        choices=Patient.INSURANCE_TYPES,
+        write_only=True,
+        required=False,
+        default="NONE",
+    )
+    insurance_coverage_percent = serializers.IntegerField(
+        write_only=True, required=False, default=0, min_value=0, max_value=100
+    )
+    billing_exempt = serializers.ChoiceField(
+        choices=Patient.BILLING_EXEMPT,
+        write_only=True,
+        required=False,
+        default="NONE",
+    )
+
     class Meta:
         model = Visit
         fields = [
             'first_name', 'last_name', 'phone', 'date_of_birth',
             'arrival_mode', 'triage_id',
-            'kin_name', 'kin_phone', 'kin_relationship'
+            'kin_name', 'kin_phone', 'kin_relationship',
+            'insurance_type', 'insurance_coverage_percent', 'billing_exempt',
         ]
 
     def create(self, validated_data):
@@ -195,18 +212,28 @@ class FinalizeRegistrationSerializer(serializers.ModelSerializer):
         patient.last_name = validated_data.get("last_name", patient.last_name)
         patient.phone = validated_data.get("phone", patient.phone)
         patient.date_of_birth = validated_data.get("date_of_birth", patient.date_of_birth)
+        if "insurance_type" in validated_data:
+            patient.insurance_type = validated_data["insurance_type"]
+        if "insurance_coverage_percent" in validated_data:
+            patient.insurance_coverage_percent = validated_data["insurance_coverage_percent"]
+        if "billing_exempt" in validated_data:
+            patient.billing_exempt = validated_data["billing_exempt"]
         patient.save()
 
         # Update visit info
         visit.arrival_mode = validated_data["arrival_mode"]
-        visit.status = "WAITING_DOCTOR"
-        
+
         if not visit.registration_number:
             visit.registration_number = Visit.allocate_next_registration_number(
                 year=timezone.now().year
             )
 
         visit.save()
+
+        from billing.services import create_front_desk_charges, set_visit_billing_deferred_from_triage
+
+        set_visit_billing_deferred_from_triage(visit)
+        create_front_desk_charges(visit)
 
         # Save Next of Kin if provided
         if validated_data.get("kin_name"):

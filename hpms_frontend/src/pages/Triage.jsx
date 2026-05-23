@@ -4,7 +4,6 @@ import API from "../api/axios";
 import TopNav from "../components/TopNav";
 import PatientNameAutocomplete from "../components/PatientNameAutocomplete";
 
-
 const VITAL_RANGES = {
   pulse: "Normal: 60–100 bpm",
   bp: "Normal: ~90/60–120/80 mmHg",
@@ -22,7 +21,9 @@ const RESPIRATION = {
 
 function parseBloodPressure(raw) {
   if (raw == null || String(raw).trim() === "") return null;
-  const m = String(raw).trim().match(/^(\d+)\s*\/\s*(\d+)$/);
+  const m = String(raw)
+    .trim()
+    .match(/^(\d+)\s*\/\s*(\d+)$/);
   if (!m) return null;
   const systolic = parseInt(m[1], 10);
   const diastolic = parseInt(m[2], 10);
@@ -108,8 +109,7 @@ function Triage() {
         const { systolic: sys, diastolic: dia } = parsed;
         if (sys > 120 || dia > 80)
           return { color: "orange", label: "Elevated / high" };
-        if (sys < 90 || dia < 60)
-          return { color: "orange", label: "Low" };
+        if (sys < 90 || dia < 60) return { color: "orange", label: "Low" };
         return { color: "green", label: "Normal" };
       }
 
@@ -128,10 +128,7 @@ function Triage() {
       const next = { ...prev, [field]: value };
 
       if (field === "canWalk" && value === "YES") {
-        if (
-          prev.respiration &&
-          prev.respiration !== RESPIRATION.NORMAL
-        ) {
+        if (prev.respiration && prev.respiration !== RESPIRATION.NORMAL) {
           next.respiration = RESPIRATION.NORMAL;
         }
       }
@@ -139,10 +136,7 @@ function Triage() {
       if (field === "respiration") {
         if (value === RESPIRATION.NONE) {
           next.canWalk = "NO";
-        } else if (
-          value !== RESPIRATION.NORMAL &&
-          prev.canWalk === "YES"
-        ) {
+        } else if (value !== RESPIRATION.NORMAL && prev.canWalk === "YES") {
           next.canWalk = "NO";
         }
       }
@@ -346,212 +340,216 @@ function Triage() {
     <div className="hpms-shell">
       <TopNav title="Triage" />
       <div className="hpms-shell-content">
-    <div className="triage-container">
-      {alertMessage && (
-        <div className={`custom-alert ${alertType}`}>
-          {alertMessage}
-          <button type="button" onClick={() => setAlertMessage("")}>
-            ×
+        <div className="triage-container">
+          {alertMessage && (
+            <div className={`custom-alert ${alertType}`}>
+              {alertMessage}
+              <button type="button" onClick={() => setAlertMessage("")}>
+                ×
+              </button>
+            </div>
+          )}
+
+          <div className="triage-header">
+            <div className="header-row">
+              <div className="field-group large">
+                <PatientNameAutocomplete
+                  value={patientName}
+                  onChange={(v) => {
+                    setPatientName(v);
+                    if (!v.trim()) setSelectedPatientId(null);
+                  }}
+                  onSelect={(p) => {
+                    if (p) void applyPatientAutofill(p);
+                    else setSelectedPatientId(null);
+                  }}
+                  placeholder="Search or Enter Patient Name..."
+                />
+              </div>
+
+              <div className="field-group small">
+                <input
+                  type="number"
+                  placeholder="Age"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                />
+              </div>
+
+              <div className="field-group small">
+                <div className="toggle-group">
+                  {["Male", "Female"].map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className={sex === item ? "active" : ""}
+                      onClick={() => setSex(item)}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="header-row">
+              <div className="field-group small">
+                <input type="text" value={arrivalTime} readOnly />
+              </div>
+
+              <div className="field-group large">
+                <div className="arrival-icons">
+                  {[
+                    { label: "Ambulance", icon: "🚑" },
+                    { label: "Private", icon: "🚗" },
+                    { label: "Walk-in", icon: "🚶" },
+                  ].map((mode) => (
+                    <button
+                      key={mode.label}
+                      type="button"
+                      className={arrivalMode === mode.label ? "active" : ""}
+                      onClick={() => setArrivalMode(mode.label)}
+                    >
+                      {mode.icon} {mode.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="header-row">
+              <div className="field-group full">
+                <textarea
+                  className="chief-complaint-field"
+                  rows={3}
+                  placeholder="Chief complaint..."
+                  value={complaint}
+                  onChange={(e) => setComplaint(e.target.value)}
+                />
+                {complaint && (
+                  <small style={{ color: "#4caf50" }}>
+                    ✔ Complaint recorded
+                  </small>
+                )}
+
+                <div className="quick-tags">
+                  {complaintQuickTags.map((tag) => (
+                    <span
+                      key={tag}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => appendComplaintTag(tag)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          appendComplaintTag(tag);
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="vitals-grid">
+            {[
+              { key: "pulse", label: "Pulse (bpm)", input: "number" },
+              { key: "bp", label: "Blood Pressure (mmHg)", input: "text" },
+              { key: "rr", label: "Respiratory rate (/min)", input: "number" },
+              { key: "spo2", label: "SpO2 (%)", input: "number" },
+              { key: "temp", label: "Temperature (°C)", input: "number" },
+            ].map((vital) => {
+              const status = getVitalStatus(vital.key, vitals[vital.key]);
+
+              return (
+                <div key={vital.key} className={`vital-card ${status.color}`}>
+                  <label>{vital.label}</label>
+                  <span className="normal-range">
+                    {VITAL_RANGES[vital.key]}
+                  </span>
+
+                  <input
+                    type={vital.input}
+                    inputMode={vital.input === "text" ? "decimal" : "numeric"}
+                    value={vitals[vital.key]}
+                    onChange={(e) =>
+                      handleVitalChange(vital.key, e.target.value)
+                    }
+                  />
+
+                  {status.label && (
+                    <small className="status-text">{status.label}</small>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="start-section">
+            <h3>S.T.A.R.T. Criteria</h3>
+
+            <div className="start-group">
+              <label>Ability to walk</label>
+              <div className="segmented">
+                {["YES", "NO"].map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={start.canWalk === option ? "active" : ""}
+                    disabled={option === "YES" && walkYesDisabled}
+                    onClick={() => handleStartChange("canWalk", option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="start-group">
+              <label>Respirations</label>
+              <div className="segmented segmented-resp">
+                {respirationOptions.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    data-severity={opt.severity}
+                    className={start.respiration === opt.key ? "active" : ""}
+                    disabled={respirationOptionDisabled(opt.key)}
+                    onClick={() => handleStartChange("respiration", opt.key)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="triage-result">
+            <h3>Triage category</h3>
+
+            <div className={`category-box ${category}`}>
+              {category || "category"}
+            </div>
+          </div>
+          <div className="admin-section">
+            <h3>Medical Notes</h3>
+
+            <textarea
+              placeholder="Allergies (⚠ Important)"
+              value={allergies}
+              onChange={(e) => setAllergies(e.target.value)}
+            />
+
+            <textarea
+              placeholder="Current Medications"
+              value={medications}
+              onChange={(e) => setMedications(e.target.value)}
+            />
+          </div>
+          <button type="button" className="submit-btn" onClick={handleSubmit}>
+            COMMIT TO QUEUE
           </button>
         </div>
-      )}
-
-      <div className="triage-header">
-        <div className="header-row">
-          <div className="field-group large">
-            <PatientNameAutocomplete
-              value={patientName}
-              onChange={(v) => {
-                setPatientName(v);
-                if (!v.trim()) setSelectedPatientId(null);
-              }}
-              onSelect={(p) => {
-                if (p) void applyPatientAutofill(p);
-                else setSelectedPatientId(null);
-              }}
-              placeholder="Search or Enter Patient Name..."
-            />
-          </div>
-
-          <div className="field-group small">
-            <input
-              type="number"
-              placeholder="Age"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-            />
-          </div>
-
-          <div className="field-group small">
-            <div className="toggle-group">
-              {["Male", "Female"].map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={sex === item ? "active" : ""}
-                  onClick={() => setSex(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="header-row">
-          <div className="field-group small">
-            <input type="text" value={arrivalTime} readOnly />
-          </div>
-
-          <div className="field-group large">
-            <div className="arrival-icons">
-              {[
-                { label: "Ambulance", icon: "🚑" },
-                { label: "Private", icon: "🚗" },
-                { label: "Walk-in", icon: "🚶" },
-              ].map((mode) => (
-                <button
-                  key={mode.label}
-                  type="button"
-                  className={arrivalMode === mode.label ? "active" : ""}
-                  onClick={() => setArrivalMode(mode.label)}
-                >
-                  {mode.icon} {mode.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="header-row">
-          <div className="field-group full">
-            <textarea
-              className="chief-complaint-field"
-              rows={3}
-              placeholder="Chief complaint..."
-              value={complaint}
-              onChange={(e) => setComplaint(e.target.value)}
-            />
-            {complaint && (
-              <small style={{ color: "#4caf50" }}>✔ Complaint recorded</small>
-            )}
-
-            <div className="quick-tags">
-              {complaintQuickTags.map((tag) => (
-                <span
-                  key={tag}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => appendComplaintTag(tag)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ")
-                      appendComplaintTag(tag);
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="vitals-grid">
-        {[
-          { key: "pulse", label: "Pulse (bpm)", input: "number" },
-          { key: "bp", label: "Blood Pressure (mmHg)", input: "text" },
-          { key: "rr", label: "Respiratory rate (/min)", input: "number" },
-          { key: "spo2", label: "SpO2 (%)", input: "number" },
-          { key: "temp", label: "Temperature (°C)", input: "number" },
-        ].map((vital) => {
-          const status = getVitalStatus(vital.key, vitals[vital.key]);
-
-          return (
-            <div key={vital.key} className={`vital-card ${status.color}`}>
-              <label>{vital.label}</label>
-              <span className="normal-range">{VITAL_RANGES[vital.key]}</span>
-
-              <input
-                type={vital.input}
-                inputMode={
-                  vital.input === "text" ? "decimal" : "numeric"
-                }
-                value={vitals[vital.key]}
-                onChange={(e) => handleVitalChange(vital.key, e.target.value)}
-              />
-
-              {status.label && (
-                <small className="status-text">{status.label}</small>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="start-section">
-        <h3>S.T.A.R.T. Criteria</h3>
-
-        <div className="start-group">
-          <label>Ability to walk</label>
-          <div className="segmented">
-            {["YES", "NO"].map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={start.canWalk === option ? "active" : ""}
-                disabled={option === "YES" && walkYesDisabled}
-                onClick={() => handleStartChange("canWalk", option)}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="start-group">
-          <label>Respirations</label>
-          <div className="segmented segmented-resp">
-            {respirationOptions.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                data-severity={opt.severity}
-                className={start.respiration === opt.key ? "active" : ""}
-                disabled={respirationOptionDisabled(opt.key)}
-                onClick={() => handleStartChange("respiration", opt.key)}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="triage-result">
-        <h3>Triage category</h3>
-
-        <div className={`category-box ${category}`}>
-          {category || "category"}
-        </div>
-      </div>
-      <div className="admin-section">
-        <h3>Medical Notes</h3>
-
-        <textarea
-          placeholder="Allergies (⚠ Important)"
-          value={allergies}
-          onChange={(e) => setAllergies(e.target.value)}
-        />
-
-        <textarea
-          placeholder="Current Medications"
-          value={medications}
-          onChange={(e) => setMedications(e.target.value)}
-        />
-      </div>
-      <button type="button" className="submit-btn" onClick={handleSubmit}>
-        COMMIT TO QUEUE
-      </button>
-    </div>
       </div>
     </div>
   );

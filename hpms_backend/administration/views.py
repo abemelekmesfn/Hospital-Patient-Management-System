@@ -9,7 +9,8 @@ from rest_framework.response import Response
 
 from users.models import User
 from triage.models import Visit, Triage
-from billing.models import Invoice
+from billing.models import BillingCharge, Invoice, PharmacySale
+from billing import services as billing_services
 from .models import AuditLog, InventoryItem, MAX_INVENTORY_ITEMS
 from .permissions import IsAuthenticatedAdmin
 
@@ -34,8 +35,7 @@ class DashboardStatsView(AdminAPIView):
 
     def get(self, request):
         total_patients = Visit.objects.count()
-        revenue = Invoice.objects.filter(status="PAID")
-        total_revenue = sum(invoice.total for invoice in revenue)
+        total_revenue = float(billing_services.total_hospital_revenue())
         active_staff = User.objects.filter(is_active=True).count()
         emergencies = Visit.objects.filter(triage__priority="CRITICAL").count()
 
@@ -134,11 +134,17 @@ class AnalyticsView(AdminAPIView):
             .annotate(count=Count("id"))
             .order_by("-count")
         )
-        paid = Invoice.objects.filter(status="PAID").aggregate(total=Sum("total"))[
-            "total"
-        ] or 0
-        pending = Invoice.objects.filter(status="PENDING").aggregate(
-            total=Sum("total")
+        paid_charges = BillingCharge.objects.filter(status="PAID").aggregate(
+            total=Sum("patient_amount")
+        )["total"] or 0
+        paid_pharma = PharmacySale.objects.filter(status="PAID").aggregate(
+            total=Sum("patient_amount")
+        )["total"] or 0
+        pending_charges = BillingCharge.objects.filter(status="PENDING").aggregate(
+            total=Sum("patient_amount")
+        )["total"] or 0
+        pending_pharma = PharmacySale.objects.filter(status="PENDING").aggregate(
+            total=Sum("patient_amount")
         )["total"] or 0
 
         return Response(
@@ -148,8 +154,10 @@ class AnalyticsView(AdminAPIView):
                 "visits_by_day": visits_by_day,
                 "staff_by_role": staff_by_role,
                 "billing": {
-                    "paid_total": float(paid),
-                    "pending_total": float(pending),
+                    "paid_total": float(paid_charges + paid_pharma),
+                    "pending_total": float(pending_charges + pending_pharma),
+                    "paid_cashier": float(paid_charges),
+                    "paid_pharmacy": float(paid_pharma),
                 },
             }
         )

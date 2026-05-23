@@ -22,6 +22,29 @@ class Patient(models.Model):
 
     is_unknown = models.BooleanField(default=False)
 
+    INSURANCE_TYPES = (
+        ("NONE", "No insurance"),
+        ("PARTIAL", "Partial coverage"),
+        ("FULL", "Full coverage"),
+    )
+
+    BILLING_EXEMPT = (
+        ("NONE", "Standard billing"),
+        ("EMPLOYEE", "Hospital employee"),
+        ("OTHER", "Other exempt"),
+    )
+
+    insurance_type = models.CharField(
+        max_length=20, choices=INSURANCE_TYPES, default="NONE"
+    )
+    insurance_coverage_percent = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Used when insurance_type is PARTIAL (0–100).",
+    )
+    billing_exempt = models.CharField(
+        max_length=20, choices=BILLING_EXEMPT, default="NONE"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):

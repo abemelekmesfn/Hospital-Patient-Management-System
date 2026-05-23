@@ -6,6 +6,7 @@ const emptyItem = {
   category: "MEDICINE",
   description: "",
   quantity: "0",
+  unit_price: "0",
   unit: "units",
   reorder_level: "10",
   location: "",
@@ -47,6 +48,7 @@ export default function AdminInventoryPanel({
       await onAdd({
         ...form,
         quantity: parseInt(form.quantity, 10) || 0,
+        unit_price: form.unit_price || "0",
         reorder_level: parseInt(form.reorder_level, 10) || 0,
       });
       setForm(emptyItem);
@@ -164,6 +166,17 @@ export default function AdminInventoryPanel({
               />
             </label>
             <label>
+              Unit price (ETB)
+              <input
+                name="unit_price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.unit_price}
+                onChange={handleFormChange}
+              />
+            </label>
+            <label>
               Unit
               <input name="unit" value={form.unit} onChange={handleFormChange} />
             </label>
@@ -205,6 +218,7 @@ export default function AdminInventoryPanel({
               <th>SKU</th>
               <th>Category</th>
               <th>Quantity</th>
+              <th>Price (ETB)</th>
               <th>Unit</th>
               <th>Reorder</th>
               <th>Location</th>
@@ -215,7 +229,7 @@ export default function AdminInventoryPanel({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="admin-table-empty">
+                <td colSpan={10} className="admin-table-empty">
                   No items in this category. Add inventory above.
                 </td>
               </tr>
@@ -254,6 +268,7 @@ export default function AdminInventoryPanel({
                       onBlur={() => void saveQuantity(item)}
                     />
                   </td>
+                  <td>{item.unit_price != null ? Number(item.unit_price).toLocaleString("en-ET") : "—"}</td>
                   <td>{item.unit}</td>
                   <td>{item.reorder_level}</td>
                   <td>{item.location || "—"}</td>

@@ -272,6 +272,10 @@ class CreateLabOrderSerializer(serializers.ModelSerializer):
             status="PENDING",
         )
 
+        from billing.services import create_lab_charge
+
+        create_lab_charge(lab_order)
+
         return lab_order
 
 class CompleteEncounterSerializer(serializers.Serializer):

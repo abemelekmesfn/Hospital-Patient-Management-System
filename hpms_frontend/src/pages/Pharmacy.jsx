@@ -2,7 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import TopNav from "../components/TopNav";
+import ReceiptModal from "../components/ReceiptModal";
 import "./Styles/pharmacy.css";
+
+const PHARMACY_PAYMENT_METHODS = [
+  { id: "CASH", label: "Cash" },
+  { id: "BANK_TRANSFER", label: "Bank transfer" },
+  { id: "TELEBIRR", label: "Tele Birr" },
+  { id: "INSURANCE", label: "Insurance" },
+];
 
 function groupByVisit(queue) {
   const map = new Map();
@@ -29,6 +37,9 @@ export default function Pharmacy() {
   const [checked, setChecked] = useState({});
   const [rxEdits, setRxEdits] = useState({});
   const [savingRxId, setSavingRxId] = useState(null);
+  const [payModal, setPayModal] = useState(null);
+  const [receipt, setReceipt] = useState(null);
+  const [dispensing, setDispensing] = useState(false);
 
   const fetchQueue = useCallback(async () => {
     if (!localStorage.getItem("access")) {
@@ -118,18 +129,52 @@ export default function Pharmacy() {
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleFinalize = async () => {
+  const openPaymentModal = async () => {
     const ids = Object.keys(checked).filter((id) => checked[id]);
     if (!ids.length) return;
     try {
-      for (const id of ids) {
-        await API.post(`/pharmacy/dispense/${id}/`);
+      const quotes = await Promise.all(
+        ids.map((id) => API.get(`/pharmacy/quote/${id}/`).then((r) => r.data))
+      );
+      const total = quotes.reduce(
+        (s, q) => s + Number.parseFloat(q.patient_amount || q.total || 0),
+        0
+      );
+      const waived = quotes.every((q) => q.status === "WAIVED");
+      setPayModal({ ids, quotes, total, waived });
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Could not load prices.");
+    }
+  };
+
+  const confirmDispense = async (paymentMethod) => {
+    if (!payModal) return;
+    setDispensing(true);
+    try {
+      let lastReceipt = null;
+      if (payModal.waived) {
+        for (const id of payModal.ids) {
+          await API.post(`/pharmacy/dispense/${id}/`, {});
+        }
+      } else {
+        for (const id of payModal.ids) {
+          const res = await API.post(`/pharmacy/dispense/${id}/`, {
+            payment_method: paymentMethod,
+          });
+          if (res.data.receipt) lastReceipt = res.data.receipt;
+        }
       }
+      setPayModal(null);
       setSelectedVisitId(null);
       setChecked({});
+      if (lastReceipt) setReceipt(lastReceipt);
       await fetchQueue();
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.detail || "Dispense failed.");
+    } finally {
+      setDispensing(false);
     }
   };
 
@@ -277,15 +322,68 @@ export default function Pharmacy() {
                 <button
                   type="button"
                   className="finalize-btn"
-                  onClick={handleFinalize}
+                  onClick={() => void openPaymentModal()}
                 >
-                  Finalize dispensing
+                  Collect payment & dispense
                 </button>
               </>
             )}
           </div>
         </div>
       </div>
+
+      {payModal && (
+        <div
+          className="pharm-pay-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !dispensing && setPayModal(null)}
+        >
+          <div className="pharm-pay-sheet" onClick={(e) => e.stopPropagation()}>
+            <h3>Pharmacy payment</h3>
+            {payModal.waived ? (
+              <>
+                <p>Billing waived for this patient. Confirm dispense.</p>
+                <button
+                  type="button"
+                  className="finalize-btn"
+                  disabled={dispensing}
+                  onClick={() => void confirmDispense()}
+                >
+                  Dispense (no charge)
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="pharm-pay-total">
+                  Total due:{" "}
+                  <strong>
+                    {payModal.total.toLocaleString("en-ET", {
+                      minimumFractionDigits: 2,
+                    })}{" "}
+                    ETB
+                  </strong>
+                </p>
+                <p className="pharm-pay-hint">Select payment method for audit:</p>
+                <div className="pharm-pay-methods">
+                  {PHARMACY_PAYMENT_METHODS.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={dispensing}
+                      onClick={() => void confirmDispense(m.id)}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {receipt && <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />}
     </div>
   );
 }

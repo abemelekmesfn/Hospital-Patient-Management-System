@@ -92,6 +92,9 @@ export default function Reception() {
     kin_name: "",
     kin_phone: "",
     kin_relationship: "",
+    insurance_type: "NONE",
+    insurance_coverage_percent: 0,
+    billing_exempt: "NONE",
   });
 
   const handleChange = (e) => {
@@ -155,7 +158,10 @@ export default function Reception() {
         triage_id: selected.triage_id,
       });
 
-      showToast("Registration saved. Patient is queued for the doctor.", "success");
+      showToast(
+        "Registration saved. Patient will visit cashier for fees, then the doctor queue.",
+        "success"
+      );
 
       setQueue((prev) => prev.filter((p) => p.id !== selected.id));
 
@@ -171,6 +177,9 @@ export default function Reception() {
         kin_name: "",
         kin_phone: "",
         kin_relationship: "",
+        insurance_type: "NONE",
+        insurance_coverage_percent: 0,
+        billing_exempt: "NONE",
       });
     } catch (err) {
       console.error(err);
@@ -352,6 +361,46 @@ export default function Reception() {
               </div>
             </div>
 
+            <div className="kin-box billing-box">
+              <h4>Billing & insurance</h4>
+              <label htmlFor="reg-insurance">Insurance</label>
+              <select
+                id="reg-insurance"
+                name="insurance_type"
+                value={form.insurance_type}
+                onChange={handleChange}
+              >
+                <option value="NONE">No insurance</option>
+                <option value="PARTIAL">Partial coverage</option>
+                <option value="FULL">Full coverage</option>
+              </select>
+              {form.insurance_type === "PARTIAL" && (
+                <>
+                  <label htmlFor="reg-ins-pct">Coverage % (per service)</label>
+                  <input
+                    id="reg-ins-pct"
+                    type="number"
+                    min={0}
+                    max={100}
+                    name="insurance_coverage_percent"
+                    value={form.insurance_coverage_percent}
+                    onChange={handleChange}
+                  />
+                </>
+              )}
+              <label htmlFor="reg-exempt">Billing exemption</label>
+              <select
+                id="reg-exempt"
+                name="billing_exempt"
+                value={form.billing_exempt}
+                onChange={handleChange}
+              >
+                <option value="NONE">Standard billing</option>
+                <option value="EMPLOYEE">Hospital employee (free)</option>
+                <option value="OTHER">Other exempt</option>
+              </select>
+            </div>
+
             <div className="kin-box">
               <h4>Next of kin</h4>
 
@@ -388,7 +437,7 @@ export default function Reception() {
               disabled={!isValid}
               onClick={handleFinalize}
             >
-              Finalize & assign to doctor
+              Finalize registration
             </button>
           </>
         )}

@@ -167,3 +167,59 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.pharm-pay-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(38, 50, 56, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+.pharm-pay-sheet {
+  background: #fff;
+  padding: 28px 32px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+}
+
+.pharm-pay-sheet h3 {
+  margin: 0 0 12px;
+  color: #1a237e;
+}
+
+.pharm-pay-total {
+  font-size: 15px;
+  color: #37474f;
+}
+
+.pharm-pay-hint {
+  font-size: 13px;
+  color: #78909c;
+  margin: 12px 0;
+}
+
+.pharm-pay-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pharm-pay-methods button {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #1a237e;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pharm-pay-methods button:hover:not(:disabled) {
+  background: #283593;
+}

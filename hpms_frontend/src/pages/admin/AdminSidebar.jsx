@@ -1,6 +1,7 @@
 export const ADMIN_SECTIONS = [
   { id: "dashboard", label: "Dashboard", icon: "◉" },
   { id: "users", label: "User Management", icon: "👥" },
+  { id: "services", label: "Services & Fees", icon: "💰" },
   { id: "analytics", label: "Analytics", icon: "📊" },
   { id: "audit", label: "Audit Logs", icon: "📋" },
   { id: "inventory", label: "Inventory", icon: "📦" },

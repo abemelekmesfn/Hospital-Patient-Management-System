@@ -35,6 +35,12 @@ class InventoryItem(models.Model):
     category = models.CharField(max_length=32, choices=CATEGORY_CHOICES)
     description = models.TextField(blank=True, default="")
     quantity = models.PositiveIntegerField(default=0)
+    unit_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Selling price per unit in ETB (pharmacy).",
+    )
     unit = models.CharField(max_length=32, default="units")
     reorder_level = models.PositiveIntegerField(default=10)
     location = models.CharField(max_length=128, blank=True, default="")

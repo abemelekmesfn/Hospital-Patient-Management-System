@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 
 from doctor.models import LabOrder
 from triage.models import Visit
+from billing.services import lab_charge_is_cleared
 
 VISIT_EXCLUDED_FROM_LAB_QUEUE = frozenset(
     {
@@ -117,6 +118,8 @@ class LabQueueView(APIView):
 
         grouped = defaultdict(list)
         for o in orders:
+            if not lab_charge_is_cleared(o):
+                continue
             grouped[o.visit_id].append(o)
 
         out = []
