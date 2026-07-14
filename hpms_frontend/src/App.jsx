@@ -8,6 +8,7 @@ import Pharmacy from "./pages/Pharmacy";
 import Nurse from "./pages/Nurse";
 import Admin from "./pages/Admin";
 import Cashier from "./pages/Cashier";
+import DoctorReports from "./pages/DoctorReports";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/nurse" element={<Nurse />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/cashier" element={<Cashier />} />
+        <Route path="/doctor-reports" element={<DoctorReports />} />
       </Routes>
     </BrowserRouter>
   );

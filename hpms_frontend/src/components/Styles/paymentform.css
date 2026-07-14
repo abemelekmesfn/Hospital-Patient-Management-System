@@ -1,0 +1,211 @@
+.pay-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 35, 126, 0.35);
+  backdrop-filter: blur(6px);
+  padding: 24px;
+  animation: payFadeIn 0.18s ease;
+}
+
+@keyframes payFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pay-modal-sheet {
+  position: relative;
+  background: #fff;
+  width: min(480px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 14px;
+  padding: 28px 30px 24px;
+  box-shadow: 0 20px 60px rgba(26, 35, 126, 0.22);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  animation: paySlideUp 0.22s ease;
+}
+
+@keyframes paySlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pay-modal-sheet h3 {
+  margin: 0 0 4px;
+  color: #1a237e;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pay-modal-subtitle {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: #607d8b;
+}
+
+.pay-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  color: #78909c;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* ─── Amount summary ─── */
+.pay-modal-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: #e8eaf6;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.pay-modal-summary span {
+  font-size: 13px;
+  color: #3949ab;
+  font-weight: 600;
+}
+
+.pay-modal-summary strong {
+  font-size: 1.15rem;
+  color: #1a237e;
+  font-weight: 800;
+}
+
+/* ─── Method cards ─── */
+.pay-method-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5c6bc0;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.pay-method-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pay-method-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.pay-method-card:hover {
+  border-color: #7986cb;
+  background: #f5f5ff;
+}
+
+.pay-method-card.selected {
+  border-color: #1a237e;
+  background: #e8eaf6;
+  box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.12);
+}
+
+.pay-method-icon {
+  font-size: 22px;
+}
+
+.pay-method-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #263238;
+}
+
+/* ─── Payer details form ─── */
+.pay-details-section {
+  margin-bottom: 18px;
+}
+
+.pay-details-section label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3949ab;
+}
+
+.pay-details-section input {
+  padding: 10px 12px;
+  border: 1px solid #c5cae9;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #263238;
+  transition: border-color 0.15s ease;
+}
+
+.pay-details-section input:focus {
+  outline: none;
+  border-color: #3949ab;
+  box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.1);
+}
+
+.pay-details-section input::placeholder {
+  color: #b0bec5;
+}
+
+/* ─── Confirm button ─── */
+.pay-confirm-btn {
+  width: 100%;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #1a237e, #283593);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.pay-confirm-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.pay-confirm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pay-confirm-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.invalid-input {
+  border-color: #f44336 !important;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1) !important;
+}
+
+.validation-error {
+  color: #f44336;
+  font-size: 11px;
+  margin-top: 2px;
+  font-weight: 500;
+}

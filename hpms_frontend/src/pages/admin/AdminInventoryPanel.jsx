@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const emptyItem = {
   name: "",
@@ -25,9 +26,28 @@ export default function AdminInventoryPanel({
   const [form, setForm] = useState(emptyItem);
   const [formError, setFormError] = useState("");
   const [editQty, setEditQty] = useState({});
+  const [editPrice, setEditPrice] = useState({});
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const categories = inventory?.categories || [];
   const items = inventory?.items || [];
+  
+  const categories = useMemo(() => {
+    const existing = inventory?.categories || [];
+    const defaults = [
+      { value: "MEDICINE", label: "Medicine" },
+      { value: "ASSETS", label: "Assets" },
+      { value: "SUPPLIES", label: "Supplies" },
+      { value: "EQUIPMENT", label: "Equipment" },
+      { value: "LABORATORY", label: "Laboratory" },
+    ];
+    const merged = [...defaults];
+    existing.forEach((e) => {
+      if (!merged.find((m) => m.value.toUpperCase() === e.value.toUpperCase())) {
+        merged.push(e);
+      }
+    });
+    return merged;
+  }, [inventory]);
   const maxItems = inventory?.max_items ?? 200;
   const total = inventory?.total ?? 0;
 
@@ -49,7 +69,8 @@ export default function AdminInventoryPanel({
         ...form,
         quantity: parseInt(form.quantity, 10) || 0,
         unit_price: form.unit_price || "0",
-        reorder_level: parseInt(form.reorder_level, 10) || 0,
+        reorder_level: 10,
+        location: "",
       });
       setForm(emptyItem);
       setShowForm(false);
@@ -73,6 +94,19 @@ export default function AdminInventoryPanel({
     if (Number.isNaN(qty) || qty < 0) return;
     await onUpdate(item.id, { quantity: qty });
     setEditQty((prev) => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
+    });
+  };
+
+  const savePrice = async (item) => {
+    const raw = editPrice[item.id];
+    if (raw === undefined || raw === "") return;
+    const price = parseFloat(raw);
+    if (Number.isNaN(price) || price < 0) return;
+    await onUpdate(item.id, { unit_price: price });
+    setEditPrice((prev) => {
       const next = { ...prev };
       delete next[item.id];
       return next;
@@ -180,20 +214,6 @@ export default function AdminInventoryPanel({
               Unit
               <input name="unit" value={form.unit} onChange={handleFormChange} />
             </label>
-            <label>
-              Reorder level
-              <input
-                name="reorder_level"
-                type="number"
-                min="0"
-                value={form.reorder_level}
-                onChange={handleFormChange}
-              />
-            </label>
-            <label>
-              Location
-              <input name="location" value={form.location} onChange={handleFormChange} />
-            </label>
             <label className="admin-form-full">
               Description
               <textarea
@@ -220,8 +240,6 @@ export default function AdminInventoryPanel({
               <th>Quantity</th>
               <th>Price (ETB)</th>
               <th>Unit</th>
-              <th>Reorder</th>
-              <th>Location</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -229,7 +247,7 @@ export default function AdminInventoryPanel({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="admin-table-empty">
+                <td colSpan={8} className="admin-table-empty">
                   No items in this category. Add inventory above.
                 </td>
               </tr>
@@ -268,10 +286,27 @@ export default function AdminInventoryPanel({
                       onBlur={() => void saveQuantity(item)}
                     />
                   </td>
-                  <td>{item.unit_price != null ? Number(item.unit_price).toLocaleString("en-ET") : "—"}</td>
+                  <td>
+                    <input
+                      type="number"
+                      className="admin-qty-input"
+                      min="0"
+                      step="0.01"
+                      value={
+                        editPrice[item.id] !== undefined
+                          ? editPrice[item.id]
+                          : String(item.unit_price || 0)
+                      }
+                      onChange={(e) =>
+                        setEditPrice((prev) => ({
+                          ...prev,
+                          [item.id]: e.target.value,
+                        }))
+                      }
+                      onBlur={() => void savePrice(item)}
+                    />
+                  </td>
                   <td>{item.unit}</td>
-                  <td>{item.reorder_level}</td>
-                  <td>{item.location || "—"}</td>
                   <td>
                     <span className={`admin-inv-pill ${item.status}`}>
                       {item.status === "low" ? "Low stock" : "OK"}
@@ -282,11 +317,7 @@ export default function AdminInventoryPanel({
                       type="button"
                       className="admin-btn admin-btn-danger"
                       disabled={saving}
-                      onClick={() => {
-                        if (window.confirm(`Remove ${item.name}?`)) {
-                          void onDelete(item.id);
-                        }
-                      }}
+                      onClick={() => setDeleteTarget(item)}
                     >
                       Remove
                     </button>
@@ -297,6 +328,19 @@ export default function AdminInventoryPanel({
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Remove Inventory Item"
+        message={`Are you sure you want to remove "${deleteTarget?.name}" from inventory? This action cannot be undone.`}
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => {
+          onDelete(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

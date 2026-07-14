@@ -3,8 +3,8 @@ import SimpleDonutChart from "./SimpleDonutChart";
 
 function formatMoney(n) {
   const v = Number(n);
-  if (Number.isNaN(v)) return "$0";
-  return `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  if (Number.isNaN(v)) return "0 ETB";
+  return `${v.toLocaleString(undefined, { maximumFractionDigits: 0 })} ETB`;
 }
 
 export default function AdminDashboardPanel({ stats = {}, analytics = null, loading }) {
@@ -41,23 +41,29 @@ export default function AdminDashboardPanel({ stats = {}, analytics = null, load
           </strong>
         </article>
         <article className="admin-stat-card">
-          <span className="admin-stat-label">Active staff</span>
-          <strong className="admin-stat-value">{stats.active_staff ?? 0}</strong>
+          <span className="admin-stat-label">Insurance revenue</span>
+          <strong className="admin-stat-value accent">
+            {formatMoney(stats.insurance_total)}
+          </strong>
         </article>
         <article className="admin-stat-card alert">
-          <span className="admin-stat-label">Critical triage</span>
-          <strong className="admin-stat-value">{stats.emergencies ?? 0}</strong>
+          <span className="admin-stat-label">Free Services</span>
+          <strong className="admin-stat-value">
+            {formatMoney(stats.waived_total)}
+          </strong>
+        </article>
+        <article className="admin-stat-card info">
+          <span className="admin-stat-label">Bed Occupancy</span>
+          <strong className="admin-stat-value">
+            {stats.bed_occupancy?.occupied_beds ?? 0} / {stats.bed_occupancy?.total_beds ?? 0}
+          </strong>
         </article>
       </div>
 
       <div className="admin-charts-row">
-        <section className="admin-chart-card">
+        <section className="admin-chart-card wide">
           <h3>Visits — last 7 days</h3>
           <SimpleBarChart data={dayData} />
-        </section>
-        <section className="admin-chart-card">
-          <h3>Triage priority mix</h3>
-          <SimpleDonutChart data={priorityData} />
         </section>
       </div>
     </div>

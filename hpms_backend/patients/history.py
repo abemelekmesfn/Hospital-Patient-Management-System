@@ -29,8 +29,6 @@ def _triage_block(visit):
 def _reception_block(visit):
     kin = visit.next_of_kin.first() if hasattr(visit, "next_of_kin") else None
     return {
-        "registration_number": visit.registration_number,
-        "arrival_mode": visit.arrival_mode,
         "arrival_time": visit.arrival_time,
         "status": visit.status,
         "kin_name": kin.name if kin else "",
@@ -103,7 +101,6 @@ def build_clinical_history(patient):
         visits_data.append(
             {
                 "id": visit.id,
-                "registration_number": visit.registration_number,
                 "arrival_time": visit.arrival_time,
                 "status": visit.status,
                 "doctor_name": _doctor_display(doctor),
@@ -154,7 +151,6 @@ def build_admin_history(patient):
         visits_data.append(
             {
                 "id": visit.id,
-                "registration_number": visit.registration_number,
                 "arrival_time": visit.arrival_time,
                 "status": visit.status,
                 "doctor_name": _doctor_display(doctor),

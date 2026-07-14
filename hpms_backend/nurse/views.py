@@ -4,18 +4,23 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
 from rest_framework import status
 from django.utils import timezone
+from django.db.models import Q
 from triage.models import Triage
 from doctor.models import NurseTask
+from .models import NurseObservation
 from .serializers import NurseTaskSerializer
 
 class NurseQueueView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user = request.user
         tasks = (
             NurseTask.objects.select_related("visit__patient", "visit__triage")
+            .filter(Q(assigned_nurse=user) | Q(assigned_nurse__isnull=True))
             .exclude(status="DONE")
             .order_by("-created_at")
         )
@@ -133,3 +138,52 @@ class NurseVisitVitalsView(APIView):
                 "temperature": str(triage.temperature),
             }
         )
+
+class CommitNotesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        visit_id = request.data.get("visit_id")
+        notes = request.data.get("notes", "").strip()
+        
+        if not visit_id:
+            return Response({"detail": "visit_id required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not notes:
+            return Response({"detail": "Notes cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        NurseObservation.objects.create(
+            visit_id=visit_id,
+            nurse=request.user,
+            observation_notes=notes,
+            commit_type="NOTES"
+        )
+        
+        return Response({"message": "Notes committed to doctor successfully."})
+
+class CommitVitalsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        visit_id = request.data.get("visit_id")
+        
+        if not visit_id:
+            return Response({"detail": "visit_id required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        triage = get_object_or_404(Triage, visit_id=visit_id)
+        
+        vitals_snapshot = {
+            "pulse": triage.pulse,
+            "respiratory_rate": triage.respiratory_rate,
+            "blood_pressure": triage.blood_pressure,
+            "temperature": str(triage.temperature) if triage.temperature else None
+        }
+        
+        NurseObservation.objects.create(
+            visit_id=visit_id,
+            nurse=request.user,
+            vitals_snapshot=vitals_snapshot,
+            commit_type="VITALS"
+        )
+        
+        return Response({"message": "Vitals committed to doctor successfully."})

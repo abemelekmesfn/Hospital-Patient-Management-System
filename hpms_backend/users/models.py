@@ -15,7 +15,21 @@ class User(AbstractUser):
         ('CASHIER', 'Cashier'),
     )
 
+    DEPARTMENT_CHOICES = (
+        ('OPD', 'OPD (Outpatient Department)'),
+        ('PED', 'PED (Pediatrics)'),
+        ('OBGYN', 'OB/GYN (Obstetrics and Gynecology)'),
+        ('IM', 'IM / INT MED (Internal Medicine)'),
+        ('ORTHO', 'ORTHO (Orthopedics)'),
+        ('CARD', 'CARD (Cardiology)'),
+        ('DERM', 'DERM (Dermatology)'),
+        ('ENT', 'ENT (Otolaryngology)'),
+        ('OPH', 'OPH / OPHTH (Ophthalmology)'),
+        ('EMERG', 'EMERG (Emergency)'),
+    )
+
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    department = models.CharField(max_length=20, choices=DEPARTMENT_CHOICES, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.role == "ADMIN":

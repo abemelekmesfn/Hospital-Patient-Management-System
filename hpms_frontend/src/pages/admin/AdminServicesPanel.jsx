@@ -97,19 +97,6 @@ export default function AdminServicesPanel({ services, onRefresh, loading }) {
               required
             />
           </label>
-          <label>
-            Type
-            <select
-              value={form.service_type}
-              onChange={(e) => setForm({ ...form, service_type: e.target.value })}
-            >
-              {SERVICE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
         <button type="submit" className="admin-btn-primary" disabled={saving}>
           {saving ? "Saving…" : "Add service"}
@@ -124,19 +111,18 @@ export default function AdminServicesPanel({ services, onRefresh, loading }) {
               <th>Name</th>
               <th>Department</th>
               <th>Price (ETB)</th>
-              <th>Type</th>
               <th>Active</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={6}>Loading…</td>
+                <td colSpan={5}>Loading…</td>
               </tr>
             )}
             {!loading && (!services || services.length === 0) && (
               <tr>
-                <td colSpan={6}>No services configured.</td>
+                <td colSpan={5}>No services configured.</td>
               </tr>
             )}
             {(services || []).map((svc) => (
@@ -145,7 +131,6 @@ export default function AdminServicesPanel({ services, onRefresh, loading }) {
                 <td>{svc.name}</td>
                 <td>{svc.department}</td>
                 <td>{Number(svc.default_price).toLocaleString("en-ET")}</td>
-                <td>{svc.service_type}</td>
                 <td>
                   <button
                     type="button"

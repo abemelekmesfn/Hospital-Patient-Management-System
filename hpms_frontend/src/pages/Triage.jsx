@@ -34,7 +34,6 @@ function parseBloodPressure(raw) {
 function Triage() {
   const [patientName, setPatientName] = useState("");
   const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [age, setAge] = useState("");
   const [sex, setSex] = useState("");
   const [arrivalMode, setArrivalMode] = useState("");
   const [arrivalTime] = useState(() => {
@@ -45,6 +44,7 @@ function Triage() {
     });
   });
   const [complaint, setComplaint] = useState("");
+  const [doctorDepartment, setDoctorDepartment] = useState("");
 
   const [vitals, setVitals] = useState({
     pulse: "",
@@ -189,10 +189,8 @@ function Triage() {
       const res = await API.get(`patients/${patient.id}/autofill/`);
       const d = res.data;
       if (d.full_name) setPatientName(d.full_name);
-      if (d.age != null) setAge(String(d.age));
       if (d.sex_display) setSex(d.sex_display);
     } catch {
-      if (patient.age != null) setAge(String(patient.age));
       if (patient.sex === "MALE") setSex("Male");
       else if (patient.sex === "FEMALE") setSex("Female");
     }
@@ -259,7 +257,6 @@ function Triage() {
       const triageResp = await API.post("triage/create/", {
         patient_id: patientId,
         name: patientName,
-        age,
         sex,
         arrival_mode: arrivalModeBackend,
         chief_complaint: complaint,
@@ -271,6 +268,7 @@ function Triage() {
         priority: nextCategory,
         allergies,
         medications,
+        doctor_department: doctorDepartment,
       });
 
       if (triageResp.status === 200) {
@@ -284,7 +282,6 @@ function Triage() {
 
         setPatientName("");
         setSelectedPatientId(null);
-        setAge("");
         setSex("");
         setArrivalMode("");
         setComplaint("");
@@ -298,6 +295,7 @@ function Triage() {
         setStart({ canWalk: "", respiration: "" });
         setAllergies("");
         setMedications("");
+        setDoctorDepartment("");
       } else {
         setAlertMessage(
           "Error submitting triage: " +
@@ -364,15 +362,6 @@ function Triage() {
                     else setSelectedPatientId(null);
                   }}
                   placeholder="Search or Enter Patient Name..."
-                />
-              </div>
-
-              <div className="field-group small">
-                <input
-                  type="number"
-                  placeholder="Age"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
                 />
               </div>
 
@@ -472,6 +461,8 @@ function Triage() {
                   <input
                     type={vital.input}
                     inputMode={vital.input === "text" ? "decimal" : "numeric"}
+                    min={vital.input === "number" ? "0" : undefined}
+                    step={vital.input === "number" ? "any" : undefined}
                     value={vitals[vital.key]}
                     onChange={(e) =>
                       handleVitalChange(vital.key, e.target.value)
@@ -532,6 +523,25 @@ function Triage() {
             </div>
           </div>
           <div className="admin-section">
+            <h3>Doctor Department</h3>
+            <select
+              value={doctorDepartment}
+              onChange={(e) => setDoctorDepartment(e.target.value)}
+              className="department-select"
+              style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)", marginBottom: "1rem" }}
+            >
+              <option value="">-- Select Department --</option>
+              <option value="OPD">OPD (Outpatient Department)</option>
+              <option value="PED">PED (Pediatrics)</option>
+              <option value="OBGYN">OB/GYN (Obstetrics and Gynecology)</option>
+              <option value="IM">IM / INT MED (Internal Medicine)</option>
+              <option value="ORTHO">ORTHO (Orthopedics)</option>
+              <option value="CARD">CARD (Cardiology)</option>
+              <option value="DERM">DERM (Dermatology)</option>
+              <option value="ENT">ENT (Otolaryngology)</option>
+              <option value="OPH">OPH / OPHTH (Ophthalmology)</option>
+            </select>
+
             <h3>Medical Notes</h3>
 
             <textarea

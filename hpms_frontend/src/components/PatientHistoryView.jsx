@@ -137,7 +137,7 @@ export default function PatientHistoryView({ patientId, variant = "clinical", on
               <header className="ph-visit-head">
                 <div>
                   <h4>
-                    Visit {visit.registration_number || `#${visit.id}`}
+                    Visit {visit.id}
                   </h4>
                   <p className="ph-visit-meta">
                     {formatDateTime(visit.arrival_time)} · Status:{" "}
@@ -195,7 +195,7 @@ function ClinicalVisitBody({ visit }) {
       <section className="ph-section">
         <h5>Reception</h5>
         <p>
-          Registration: {reception.registration_number || "—"} · Arrival:{" "}
+          Arrival:{" "}
           {reception.arrival_mode || "—"}
         </p>
         {(reception.kin_name || reception.kin_phone) && (
@@ -278,7 +278,7 @@ function AdminVisitBody({ visit }) {
       <section className="ph-section">
         <h5>Registration</h5>
         <p>
-          {reception.registration_number || "—"} · {reception.arrival_mode || "—"} ·{" "}
+          {reception.arrival_mode || "—"} ·{" "}
           {formatDateTime(reception.arrival_time)}
         </p>
         {(reception.kin_name || reception.kin_phone) && (
@@ -299,7 +299,7 @@ function AdminVisitBody({ visit }) {
         <section className="ph-section">
           <h5>Payment</h5>
           <p>
-            Invoice #{invoice.id} · {invoice.status} · Total: ${invoice.total}
+            Invoice #{invoice.id} · {invoice.status} · Total: {invoice.total} ETB
             {invoice.payment_method && ` · ${invoice.payment_method}`}
           </p>
           {invoice.items?.length > 0 && (
@@ -316,7 +316,7 @@ function AdminVisitBody({ visit }) {
                   <tr key={i}>
                     <td>{item.service_name}</td>
                     <td>{item.department}</td>
-                    <td>${item.cost}</td>
+                    <td>{item.cost} ETB</td>
                   </tr>
                 ))}
               </tbody>

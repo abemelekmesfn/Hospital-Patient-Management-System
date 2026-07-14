@@ -200,41 +200,75 @@
 }
 
 .payment-section h4 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   color: #37474f;
   font-size: 14px;
 }
 
-.payment-buttons {
+.payment-action-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 10px;
 }
 
-.payment-buttons button {
-  padding: 10px 14px;
+.pay-action-btn {
+  padding: 12px 20px;
   border: none;
-  border-radius: 8px;
-  background: #1a237e;
-  color: #fff;
-  font-size: 13px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.payment-buttons button:disabled {
-  opacity: 0.6;
+.pay-action-btn:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
-.payment-buttons button:hover:not(:disabled) {
-  background: #283593;
+.pay-action-primary {
+  background: linear-gradient(135deg, #1a237e, #283593);
+  color: #fff;
 }
 
-.payment-buttons-secondary .btn-outline {
+.pay-action-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #283593, #3949ab);
+  transform: translateY(-1px);
+}
+
+.pay-action-secondary {
   background: #fff;
   color: #1a237e;
-  border: 1px solid #1a237e;
+  border: 2px solid #1a237e;
+}
+
+.pay-action-secondary:hover:not(:disabled) {
+  background: #e8eaf6;
+}
+
+.cashier-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.cashier-total-receipt-btn {
+  padding: 8px 14px;
+  background: #e8eaf6;
+  color: #1a237e;
+  border: 1px solid #c5cae9;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cashier-total-receipt-btn:hover {
+  background: #c5cae9;
 }
 
 .cashier-toast {
@@ -256,3 +290,56 @@
 .cashier-toast.success {
   background: #2e7d32;
 }
+
+.mobile-back-btn {
+  display: none;
+  background: #1a237e;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .cashier-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .mobile-back-btn {
+    display: inline-block;
+  }
+
+  .cashier-left,
+  .cashier-right {
+    width: 100%;
+    border: none;
+    overflow-y: visible;
+  }
+
+  .cashier-left {
+    max-height: none;
+  }
+
+  .cashier-container.mobile-show-queue .cashier-right {
+    display: none;
+  }
+
+  .cashier-container.mobile-hide-queue .cashier-left {
+    display: none;
+  }
+
+  .cashier-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .cashier-table {
+    min-width: 500px;
+  }
+}
+

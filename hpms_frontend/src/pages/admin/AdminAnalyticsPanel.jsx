@@ -21,6 +21,21 @@ export default function AdminAnalyticsPanel({ analytics, loading }) {
     value: row.count,
   }));
 
+  const deptData = (analytics?.visits_by_dept || []).map((row) => ({
+    label: row.dept || "—",
+    value: row.count,
+  }));
+
+  const pharmaData = (analytics?.pharma_stats || []).map((row) => ({
+    label: row.pharmacy_status || "—",
+    value: row.count,
+  }));
+
+  const labData = (analytics?.lab_stats || []).map((row) => ({
+    label: row.status || "—",
+    value: row.count,
+  }));
+
   const billing = analytics?.billing || {};
 
   return (
@@ -33,11 +48,11 @@ export default function AdminAnalyticsPanel({ analytics, loading }) {
       <div className="admin-billing-strip">
         <div className="admin-billing-chip paid">
           <span>Paid invoices</span>
-          <strong>${Number(billing.paid_total || 0).toLocaleString()}</strong>
+          <strong>{Number(billing.paid_total || 0).toLocaleString()} ETB</strong>
         </div>
         <div className="admin-billing-chip pending">
           <span>Pending invoices</span>
-          <strong>${Number(billing.pending_total || 0).toLocaleString()}</strong>
+          <strong>{Number(billing.pending_total || 0).toLocaleString()} ETB</strong>
         </div>
       </div>
 
@@ -53,6 +68,18 @@ export default function AdminAnalyticsPanel({ analytics, loading }) {
         <section className="admin-chart-card">
           <h3>Triage priorities</h3>
           <SimpleDonutChart data={priorityData} />
+        </section>
+        <section className="admin-chart-card wide">
+          <h3>Visits by Department</h3>
+          <SimpleBarChart data={deptData} />
+        </section>
+        <section className="admin-chart-card">
+          <h3>Pharmacy Prescriptions</h3>
+          <SimpleDonutChart data={pharmaData} />
+        </section>
+        <section className="admin-chart-card">
+          <h3>Lab Orders</h3>
+          <SimpleDonutChart data={labData} />
         </section>
       </div>
     </div>

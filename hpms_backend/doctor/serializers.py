@@ -1,7 +1,24 @@
 from rest_framework import serializers
 from triage.models import Visit
 from patients.serializers import PatientSerializer
-from doctor.models import Consultation, Prescription, LabOrder, NurseTask
+from doctor.models import Consultation, Prescription, LabOrder, NurseTask, Admission, PhysicalExamination
+from nurse.serializers import NurseObservationSerializer
+
+
+class AdmissionSerializer(serializers.ModelSerializer):
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+    bed_number = serializers.CharField(source="bed.bed_number", read_only=True)
+    
+    class Meta:
+        model = Admission
+        fields = "__all__"
+
+class PhysicalExaminationSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source="doctor.username", read_only=True)
+    
+    class Meta:
+        model = PhysicalExamination
+        fields = "__all__"
 
 class DoctorQueueSerializer(serializers.ModelSerializer):
 
@@ -21,6 +38,7 @@ class DoctorQueueSerializer(serializers.ModelSerializer):
             "chief_complaint",
             "arrival_time",
             "status",
+            "is_admitted",
         ]
 
     def get_name(self, obj):
@@ -63,6 +81,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
 
 
 class NurseTaskSerializer(serializers.ModelSerializer):
+    assigned_nurse = serializers.SerializerMethodField()
 
     class Meta:
         model = NurseTask
@@ -70,7 +89,16 @@ class NurseTaskSerializer(serializers.ModelSerializer):
             "id",
             "task_description",
             "status",
+            "assigned_nurse"
         ]
+
+    def get_assigned_nurse(self, obj):
+        if not obj.assigned_nurse:
+            return None
+        return {
+            "id": obj.assigned_nurse.id,
+            "name": f"{obj.assigned_nurse.first_name} {obj.assigned_nurse.last_name}".strip() or obj.assigned_nurse.username
+        }
 
 
 class ConsultationSerializer(serializers.ModelSerializer):
@@ -87,9 +115,12 @@ class DoctorVisitSerializer(serializers.ModelSerializer):
 
     patient = PatientSerializer()
     consultation = serializers.SerializerMethodField()
-    prescriptions = PrescriptionSerializer(many=True)
-    lab_orders = LabOrderSerializer(many=True)
-    nurse_tasks = NurseTaskSerializer(many=True)
+    prescriptions = PrescriptionSerializer(many=True, read_only=True)
+    lab_orders = LabOrderSerializer(many=True, read_only=True)
+    nurse_tasks = NurseTaskSerializer(many=True, read_only=True)
+    nurse_observations = NurseObservationSerializer(many=True, read_only=True)
+    admission = serializers.SerializerMethodField()
+    physical_examinations = PhysicalExaminationSerializer(many=True, read_only=True)
 
     triage_priority = serializers.SerializerMethodField()
     chief_complaint = serializers.SerializerMethodField()
@@ -119,37 +150,46 @@ class DoctorVisitSerializer(serializers.ModelSerializer):
             "prescriptions",
             "lab_orders",
             "nurse_tasks",
+            "nurse_observations",
             "status",
             "doctor",
             "doctor_name",
             "is_admitted",
+            "admission",
+            "physical_examinations",
 
             "patient_name",
         ]
 
     def get_triage_priority(self, obj):
-        triage = getattr(obj, "triage", None)
-        return triage.priority if triage else None
+        if hasattr(obj, "triage"):
+            return obj.triage.priority
+        return None
 
     def get_chief_complaint(self, obj):
-        triage = getattr(obj, "triage", None)
-        return triage.chief_complaint if triage else None
+        if hasattr(obj, "triage"):
+            return obj.triage.chief_complaint
+        return None
 
     def get_temperature(self, obj):
-        triage = getattr(obj, "triage", None)
-        return triage.temperature if triage else None
+        if hasattr(obj, "triage"):
+            return obj.triage.temperature
+        return None
 
     def get_blood_pressure(self, obj):
-        triage = getattr(obj, "triage", None)
-        return triage.blood_pressure if triage else None
+        if hasattr(obj, "triage"):
+            return obj.triage.blood_pressure
+        return None
 
     def get_pulse(self, obj):
-        triage = getattr(obj, "triage", None)
-        return triage.pulse if triage else None
+        if hasattr(obj, "triage"):
+            return obj.triage.pulse
+        return None
 
     def get_respiratory_rate(self, obj):
-        triage = getattr(obj, "triage", None)
-        return triage.respiratory_rate if triage else None
+        if hasattr(obj, "triage"):
+            return obj.triage.respiratory_rate
+        return None
     
     def get_doctor_name(self, obj):
         if not obj.doctor:
@@ -165,6 +205,13 @@ class DoctorVisitSerializer(serializers.ModelSerializer):
         except Consultation.DoesNotExist:
             return None
         return ConsultationSerializer(consultation).data
+
+    def get_admission(self, obj):
+        try:
+            admission = obj.admission
+        except Admission.DoesNotExist:
+            return None
+        return AdmissionSerializer(admission).data
 
 class SaveConsultationSerializer(serializers.ModelSerializer):
 
@@ -288,12 +335,15 @@ class CompleteEncounterSerializer(serializers.Serializer):
 
         visit = Visit.objects.get(id=visit_id)
 
-        lab_orders_exist = visit.lab_orders.exists()
+        pending_or_processing_labs_exist = visit.lab_orders.filter(status__in=["PENDING", "PROCESSING"]).exists()
+        pending_lab_charges = visit.billing_charges.filter(stage="LAB", status="PENDING").exists()
 
-        if lab_orders_exist:
+        if pending_lab_charges:
+            visit.status = "WAITING_CASHIER"
+        elif pending_or_processing_labs_exist:
             visit.status = "WAITING_LAB_RESULTS"
         else:
-            visit.status = "CONSULTATION_COMPLETED"
+            visit.status = "WAITING_PHARMACY" if visit.prescriptions.filter(pharmacy_status="PENDING").exists() else "CONSULTATION_COMPLETED"
 
         visit.save()
 

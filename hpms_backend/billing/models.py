@@ -82,6 +82,9 @@ class BillingCharge(models.Model):
         blank=True,
         related_name="processed_charges",
     )
+    payer_name = models.CharField(max_length=255, blank=True, default="")
+    payer_account = models.CharField(max_length=100, blank=True, default="")
+    payer_phone = models.CharField(max_length=30, blank=True, default="")
     lab_order = models.OneToOneField(
         "doctor.LabOrder",
         on_delete=models.CASCADE,
@@ -96,6 +99,44 @@ class BillingCharge(models.Model):
 
     def __str__(self):
         return f"{self.service_name} — {self.visit_id}"
+
+
+class InsuranceClaim(models.Model):
+    """Tracks insurance amounts owed to the hospital and verification status."""
+
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("SUBMITTED", "Submitted"),
+        ("VERIFIED", "Verified"),
+        ("REJECTED", "Rejected"),
+    ]
+
+    charge = models.ForeignKey(
+        BillingCharge,
+        on_delete=models.CASCADE,
+        related_name="insurance_claims",
+    )
+    insurance_company = models.CharField(max_length=255, default="")
+    claim_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    reference_number = models.CharField(max_length=100, blank=True, default="")
+    notes = models.TextField(blank=True, default="")
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_claims",
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Claim #{self.id} — {self.charge.service_name}"
 
 
 class Invoice(models.Model):
@@ -139,6 +180,7 @@ class PharmacySale(models.Model):
         ("PENDING", "Pending"),
         ("PAID", "Paid"),
         ("WAIVED", "Waived"),
+        ("DEFERRED", "Deferred to Discharge"),
     ]
 
     visit = models.ForeignKey(

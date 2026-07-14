@@ -5,22 +5,36 @@
   flex: 1;
   min-height: 0;
   height: 100%;
-  background: #f5f5f5;
+  background: #f8fafc;
   font-family:
+    "Inter",
     system-ui,
     -apple-system,
-    "Segoe UI",
-    Roboto,
     sans-serif;
 }
 
 .nurse-left {
-  width: 28%;
-  min-width: 220px;
+  width: 300px;
+  min-width: 260px;
   background: white;
-  border-right: 1px solid #ddd;
-  padding: 15px;
+  border-right: 1px solid #e2e8f0;
+  padding: 24px;
   overflow-y: auto;
+}
+
+/* Custom sleek scrollbar for the queue */
+.nurse-left::-webkit-scrollbar {
+  width: 6px;
+}
+.nurse-left::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nurse-left::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+.nurse-left::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 
 .nurse-queue-empty {
@@ -32,9 +46,9 @@
 
 .nurse-right {
   flex: 1;
-  padding: 20px;
+  padding: 32px;
   overflow-y: auto;
-  background: #fafafa;
+  background: #f8fafc;
 }
 
 .nurse-queue-meta {
@@ -42,55 +56,136 @@
   gap: 12px;
   margin-top: 8px;
   font-size: 12px;
-  color: #4b5563;
+  color: #64748b;
 }
 
 .queue-card {
   cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.queue-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #94a3b8;
+}
+
+.queue-card.active {
+  border-color: transparent;
+  background: linear-gradient(to right, #eff6ff, #ffffff);
+  box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.queue-card.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #3b82f6;
+  border-radius: 4px 0 0 4px;
+}
+
+.queue-card h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #0f172a;
 }
 
 .nurse-placeholder {
-  color: #6b7280;
+  color: #64748b;
   text-align: center;
   margin-top: 100px;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.nurse-right h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px;
+  background: linear-gradient(90deg, #0f172a, #334155);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .task-list {
   margin-top: 20px;
 }
 
+@keyframes taskSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .task-item {
   background: white;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 10px;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  border: 1px solid #e6e6e6;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: taskSlideUp 0.4s ease forwards;
+}
+
+.task-item:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
 }
 
 .task-actions button {
-  margin-left: 5px;
-  padding: 8px 14px;
-  background: #1a237e;
+  margin-left: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
 .task-actions button:hover:not(:disabled) {
-  background: #0d1740;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+  background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
 }
 
 .task-actions button:disabled {
-  opacity: 0.45;
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
   cursor: not-allowed;
+  transform: none;
 }
 
 .nurse-notes {
@@ -119,23 +214,57 @@
 .vitals-btn {
   width: 100%;
   max-width: 360px;
-  padding: 12px 14px;
-  background: #1565c0;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
   color: white;
   border: none;
   border-radius: 10px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 6px rgba(21, 101, 192, 0.2);
+  transition: all 0.2s ease;
 }
 
 .vitals-btn:hover:not(:disabled) {
-  background: #0d47a1;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(21, 101, 192, 0.3);
+  background: linear-gradient(135deg, #0d47a1, #0a2f6b);
 }
 
 .vitals-btn:disabled {
-  opacity: 0.55;
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
   cursor: not-allowed;
+  transform: none;
+}
+
+.commit-doctor-btn {
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.commit-doctor-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.commit-doctor-btn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .nurse-vitals-overlay {
@@ -151,18 +280,32 @@
 .nurse-vitals-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
 }
 
 .nurse-vitals-modal {
   position: relative;
   z-index: 1;
   width: min(420px, 100%);
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
+  animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .nurse-vitals-head {
@@ -244,4 +387,95 @@
 .nurse-vitals-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.mobile-back-btn {
+  display: none;
+  background: #1a237e;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .nurse-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .mobile-back-btn {
+    display: inline-block;
+  }
+
+  .nurse-left,
+  .nurse-right {
+    width: 100%;
+    border: none;
+    overflow-y: visible;
+  }
+
+  .nurse-left {
+    max-height: none;
+  }
+
+  .nurse-container.mobile-show-queue .nurse-right {
+    display: none;
+  }
+
+  .nurse-container.mobile-hide-queue .nurse-left {
+    display: none;
+  }
+
+  .nurse-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Admission Styles ── */
+.nurse-admitted-info {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ward-bed-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.nurse-admission-detail {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 16px;
+  border-radius: 12px;
+  margin: 12px 0;
+}
+
+.nurse-admission-detail h4 {
+  margin: 0 0 10px;
+  color: #1e40af;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nurse-admission-detail p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #1e3a5f;
+  line-height: 1.5;
 }

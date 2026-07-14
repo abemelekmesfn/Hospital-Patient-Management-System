@@ -53,6 +53,7 @@ def create_triage(request):
         "chief_complaint": request.data.get("chief_complaint"),
         "priority": request.data.get("priority"),
         "triage_patient_name": raw_name,
+        "doctor_department": request.data.get("doctor_department"),
     }
 
     serializer = TriageSerializer(data=triage_data)

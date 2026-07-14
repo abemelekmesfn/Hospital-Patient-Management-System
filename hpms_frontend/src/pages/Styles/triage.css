@@ -344,3 +344,26 @@ textarea {
   margin-left: 10px;
 }
 
+@media (max-width: 768px) {
+  .header-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .vitals-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .arrival-icons {
+    flex-wrap: wrap;
+  }
+  
+  .toggle-group {
+    flex-wrap: wrap;
+  }
+  
+  .segmented {
+    flex-wrap: wrap;
+  }
+}
+

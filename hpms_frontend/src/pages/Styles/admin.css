@@ -745,39 +745,230 @@
     flex-direction: column;
     height: auto;
     min-height: 100vh;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .admin-sidebar {
     width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .admin-sidebar-brand {
+    display: flex;
     align-items: center;
-    padding: 16px;
+    gap: 10px;
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  .admin-sidebar-brand h2 {
+    font-size: 16px;
+    margin: 0;
+  }
+
+  .admin-sidebar-tagline {
+    display: none;
+  }
+
+  .admin-sidebar-logo {
+    margin-bottom: 0;
   }
 
   .admin-sidebar-nav {
-    flex: 1;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .admin-sidebar-nav ul {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
+    padding-bottom: 4px;
   }
 
   .admin-nav-link {
     margin-bottom: 0;
     padding: 8px 12px;
-    font-size: 13px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .admin-nav-link.active {
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.25);
   }
 
   .admin-sidebar-foot {
     display: none;
   }
 
+  .admin-workspace {
+    min-width: 0;
+    width: 100%;
+    overflow: visible;
+  }
+
   .admin-topbar {
     flex-direction: column;
     align-items: stretch;
+    padding: 14px 16px;
+    gap: 10px;
   }
+
+  .admin-topbar-titles h2 {
+    font-size: 17px;
+  }
+
+  .admin-topbar-search {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-main {
+    padding: 16px;
+    overflow-y: visible;
+    min-height: 0;
+  }
+
+  /* Dashboard */
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .admin-stat-value {
+    font-size: 22px;
+  }
+
+  .admin-stat-card {
+    padding: 14px;
+  }
+
+  .admin-charts-row,
+  .admin-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-chart-card {
+    padding: 14px;
+    overflow-x: auto;
+  }
+
+  .admin-dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Bar chart fix */
+  .admin-bar-row {
+    grid-template-columns: 70px 1fr 30px;
+    gap: 6px;
+  }
+
+  /* Forms */
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-card {
+    padding: 14px 16px;
+  }
+
+  /* Tables */
+  .admin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-table {
+    min-width: 600px;
+  }
+
+  .admin-panel-head-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-panel-head h1 {
+    font-size: 20px;
+  }
+
+  /* Inventory tabs */
+  .admin-inv-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 5px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Audit */
+  .admin-audit-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Donut chart container */
+  .admin-donut-wrap {
+    max-width: 200px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stat-value {
+    font-size: 20px;
+  }
+
+  .admin-sidebar {
+    padding: 10px 12px;
+  }
+
+  .admin-nav-link {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .admin-main {
+    padding: 12px;
+  }
+
+  .admin-topbar {
+    padding: 10px 12px;
+  }
+}
+
+/* ─── Activity Stats Column ─── */
+.admin-activity-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #e8eaf6, #f3e5f5);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.admin-activity-stats .activity-num {
+  color: #1a237e;
+  min-width: 18px;
+  text-align: center;
+}
+
+.admin-activity-stats .activity-sep {
+  color: #9e9e9e;
+  font-weight: 400;
 }

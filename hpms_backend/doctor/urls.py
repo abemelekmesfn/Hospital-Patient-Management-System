@@ -14,6 +14,14 @@ from .views import (
     pending_lab_notifications,
     dismiss_lab_notification,
     acknowledge_lab_results,
+    doctor_reports,
+    available_nurses,
+    nurse_observations,
+    acknowledge_nurse_data,
+    nurse_notifications,
+    admit_patient,
+    discharge_patient,
+    add_physical_examination,
 )
 
 urlpatterns = [
@@ -31,4 +39,12 @@ urlpatterns = [
     path("lab-notifications/", pending_lab_notifications),
     path("lab-notification/<int:order_id>/dismiss/", dismiss_lab_notification),
     path("lab-results/acknowledge/", acknowledge_lab_results),
+    path("reports/", doctor_reports),
+    path("available-nurses/", available_nurses),
+    path("visit/<int:visit_id>/nurse-observations/", nurse_observations),
+    path("nurse-observations/acknowledge/", acknowledge_nurse_data),
+    path("nurse-notifications/", nurse_notifications),
+    path('visit/<int:visit_id>/admit/', admit_patient),
+    path('visit/<int:visit_id>/discharge/', discharge_patient),
+    path('visit/<int:visit_id>/examination/', add_physical_examination),
 ]

@@ -10,6 +10,9 @@ import AdminAnalyticsPanel from "./admin/AdminAnalyticsPanel";
 import AdminAuditPanel from "./admin/AdminAuditPanel";
 import AdminInventoryPanel from "./admin/AdminInventoryPanel";
 import AdminServicesPanel from "./admin/AdminServicesPanel";
+import AdminInsurancePanel from "./admin/AdminInsurancePanel";
+import AdminReportsPanel from "./admin/AdminReportsPanel";
+import AdminWardsPanel from "./admin/AdminWardsPanel";
 import "./Styles/admin.css";
 
 export default function Admin() {
@@ -113,6 +116,19 @@ export default function Admin() {
     };
   }, [authChecked, fetchStats, fetchAnalytics, navigate]);
 
+  /* ── Live-refresh dashboard stats every 15 s while on the dashboard tab ── */
+  useEffect(() => {
+    if (!authChecked || activeSection !== "dashboard") return;
+    const t = setInterval(async () => {
+      try {
+        await Promise.all([fetchStats(), fetchAnalytics()]);
+      } catch (err) {
+        console.error(err);
+      }
+    }, 15000);
+    return () => clearInterval(t);
+  }, [authChecked, activeSection, fetchStats, fetchAnalytics]);
+
   useEffect(() => {
     if (activeSection !== "users") return;
     let cancelled = false;
@@ -206,6 +222,9 @@ export default function Admin() {
   const handleNavigate = (section) => {
     setHistoryPatientId(null);
     setActiveSection(section);
+    if (section === "dashboard") {
+      void Promise.all([fetchStats(), fetchAnalytics()]);
+    }
   };
 
   const toggleUser = async (id) => {
@@ -228,6 +247,16 @@ export default function Admin() {
       await fetchUsers();
     } finally {
       setCreatingUser(false);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    try {
+      await API.delete(`/admin/users/${id}/delete/`);
+      await fetchUsers();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Could not delete user.");
     }
   };
 
@@ -279,6 +308,8 @@ export default function Admin() {
     audit: "Audit Logs",
     inventory: "Inventory",
     services: "Services & Fees",
+    wards: "Wards & Beds Management",
+    reports: "Reports",
   };
 
   const renderWorkspace = () => {
@@ -299,6 +330,7 @@ export default function Admin() {
             users={users}
             loading={loading.users}
             onToggle={toggleUser}
+            onDelete={deleteUser}
             onCreateUser={createUser}
             togglingId={togglingId}
             creating={creatingUser}
@@ -326,6 +358,10 @@ export default function Admin() {
             saving={inventorySaving}
           />
         );
+      case "insurance":
+        return <AdminInsurancePanel />;
+      case "reports":
+        return <AdminReportsPanel />;
       case "services":
         return (
           <AdminServicesPanel
@@ -334,6 +370,8 @@ export default function Admin() {
             onRefresh={fetchServices}
           />
         );
+      case "wards":
+        return <AdminWardsPanel />;
       default:
         return (
           <AdminDashboardPanel

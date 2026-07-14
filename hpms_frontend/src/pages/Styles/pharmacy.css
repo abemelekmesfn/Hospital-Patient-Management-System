@@ -223,3 +223,55 @@
 .pharm-pay-methods button:hover:not(:disabled) {
   background: #283593;
 }
+
+.mobile-back-btn {
+  display: none;
+  background: #1a237e;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+  .pharmacy-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .mobile-back-btn {
+    display: inline-block;
+  }
+
+  .pharmacy-left,
+  .pharmacy-right {
+    width: 100%;
+    border: none;
+    overflow-y: visible;
+  }
+
+  .pharmacy-left {
+    max-height: none;
+  }
+
+  .pharmacy-container.mobile-show-queue .pharmacy-right {
+    display: none;
+  }
+
+  .pharmacy-container.mobile-hide-queue .pharmacy-left {
+    display: none;
+  }
+
+  .dispense-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .dispense-table {
+    min-width: 500px;
+  }
+}

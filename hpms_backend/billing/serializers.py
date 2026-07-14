@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import BillingCharge, HospitalService, PharmacySale, PharmacySaleLine
+from .models import BillingCharge, HospitalService, InsuranceClaim, PharmacySale, PharmacySaleLine
 
 
 class HospitalServiceSerializer(serializers.ModelSerializer):
@@ -44,6 +44,9 @@ class BillingChargeSerializer(serializers.ModelSerializer):
             "paid_at",
             "patient_name",
             "hospital_id",
+            "payer_name",
+            "payer_account",
+            "payer_phone",
             "lab_order",
             "created_at",
         ]
@@ -65,7 +68,6 @@ class CashierQueueVisitSerializer(serializers.Serializer):
     visit_id = serializers.IntegerField()
     patient_name = serializers.CharField()
     hospital_id = serializers.CharField()
-    registration_number = serializers.CharField(allow_null=True)
     billing_deferred = serializers.BooleanField()
     insurance_type = serializers.CharField()
     billing_exempt = serializers.CharField()
@@ -108,3 +110,52 @@ class PharmacySaleSerializer(serializers.ModelSerializer):
             return ""
         p = obj.visit.patient
         return f"{p.first_name} {p.last_name}".strip()
+
+
+class InsuranceClaimSerializer(serializers.ModelSerializer):
+    patient_name = serializers.SerializerMethodField()
+    hospital_id = serializers.SerializerMethodField()
+    service_name = serializers.SerializerMethodField()
+    charge_receipt_number = serializers.SerializerMethodField()
+    verified_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InsuranceClaim
+        fields = [
+            "id",
+            "charge",
+            "insurance_company",
+            "claim_amount",
+            "status",
+            "reference_number",
+            "notes",
+            "verified_by",
+            "verified_by_name",
+            "verified_at",
+            "patient_name",
+            "hospital_id",
+            "service_name",
+            "charge_receipt_number",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_patient_name(self, obj):
+        p = obj.charge.visit.patient
+        return f"{p.first_name} {p.last_name}".strip()
+
+    def get_hospital_id(self, obj):
+        return obj.charge.visit.patient.hospital_id
+
+    def get_service_name(self, obj):
+        return obj.charge.service_name
+
+    def get_charge_receipt_number(self, obj):
+        return obj.charge.receipt_number
+
+    def get_verified_by_name(self, obj):
+        if not obj.verified_by:
+            return None
+        u = obj.verified_by
+        name = f"{u.first_name} {u.last_name}".strip()
+        return name or u.username

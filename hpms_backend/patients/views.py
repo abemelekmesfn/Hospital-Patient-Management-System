@@ -145,6 +145,7 @@ def patient_autofill(request, pk):
         "sex": patient.sex,
         "sex_display": _sex_display(patient.sex),
         "phone": patient.phone or "",
+        "address": patient.address or "",
         "date_of_birth": patient.date_of_birth,
         "pending_visit_id": pending_visit.id if pending_visit else None,
         "triage": None,

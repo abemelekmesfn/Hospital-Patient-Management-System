@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from triage.models import Visit, Triage
 from .serializers import ReceptionQueueSerializer
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
+from users.models import User
 from .serializers import VisitDetailSerializer
 from .serializers import FinalizeRegistrationSerializer
 
@@ -52,7 +54,36 @@ def finalize_registration(request):
         return Response({
             "message": "Registration completed",
             "visit_id": visit.id,
-            "registration_number": visit.registration_number
+            "hospital_id": visit.patient.hospital_id
         })
 
     return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def available_doctors(request):
+    department = request.query_params.get("department", "")
+    
+    qs = User.objects.filter(role="DOCTOR", is_active=True)
+    if department:
+        qs = qs.filter(department=department)
+        
+    qs = qs.annotate(
+        queue_count=Count(
+            'doctor_visits',
+            filter=Q(doctor_visits__status__in=["WAITING_DOCTOR", "IN_CONSULTATION"]) & Q(doctor_visits__is_admitted=False)
+        )
+    ).order_by("queue_count")
+    
+    data = [
+        {
+            "id": doc.id,
+            "name": f"Dr. {doc.first_name} {doc.last_name}".strip(),
+            "department": doc.department,
+            "queue_count": doc.queue_count
+        }
+        for doc in qs
+    ]
+    
+    return Response(data)

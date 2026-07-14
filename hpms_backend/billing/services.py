@@ -1,12 +1,12 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Sum
 from django.utils import timezone
 
 from triage.models import Visit, Triage
 
-from .models import BillingCharge, HospitalService, Invoice, InvoiceItem
+from .models import BillingCharge, HospitalService, InsuranceClaim, Invoice, InvoiceItem
 
 
 DEFAULT_SERVICES = [
@@ -66,6 +66,8 @@ def calculate_split(patient, gross: Decimal) -> tuple[Decimal, Decimal]:
 
 def visit_is_emergency_deferred(visit: Visit) -> bool:
     if visit.billing_deferred:
+        return True
+    if visit.is_admitted:
         return True
     triage = getattr(visit, "triage", None)
     if triage and triage.priority in ("CRITICAL", "URGENT"):
@@ -198,7 +200,7 @@ def lab_charge_is_cleared(lab_order) -> bool:
     return False
 
 
-def pay_charges(charge_ids, payment_method, user):
+def pay_charges(charge_ids, payment_method, user, payer_name="", payer_account="", payer_phone=""):
     """Mark charges paid and return receipt payload."""
     ensure_default_services()
     receipt_no = _allocate_receipt_number()
@@ -219,25 +221,49 @@ def pay_charges(charge_ids, payment_method, user):
             ch.receipt_number = receipt_no
             ch.paid_at = now
             ch.paid_by = user
+            ch.payer_name = payer_name
+            ch.payer_account = payer_account
+            ch.payer_phone = payer_phone
             ch.save()
             visit_ids.add(ch.visit_id)
+
+            # Auto-create insurance claim for charges with insurance coverage
+            if ch.insurance_amount and ch.insurance_amount > 0:
+                patient = ch.visit.patient
+                company = ""
+                if hasattr(patient, "insurance_provider"):
+                    company = patient.insurance_provider or ""
+                InsuranceClaim.objects.create(
+                    charge=ch,
+                    insurance_company=company,
+                    claim_amount=ch.insurance_amount,
+                    status="PENDING",
+                )
 
         for vid in visit_ids:
             visit = Visit.objects.get(pk=vid)
             on_front_desk_payment_complete(visit)
+            on_lab_payment_complete(visit)
             _sync_visit_invoice(visit)
 
     return build_receipt_from_charges(charges, receipt_no, payment_method, now)
 
 
-def pay_visit_bulk(visit_id, payment_method, user, stage=None):
+def on_lab_payment_complete(visit: Visit):
+    if visit.status == "WAITING_CASHIER" and visit.lab_orders.exists() and not visit.billing_charges.filter(stage="LAB", status="PENDING").exists():
+        visit.status = "WAITING_LAB_RESULTS"
+        visit.save(update_fields=["status"])
+
+
+
+def pay_visit_bulk(visit_id, payment_method, user, stage=None, payer_name="", payer_account="", payer_phone=""):
     qs = BillingCharge.objects.filter(visit_id=visit_id, status="PENDING")
     if stage:
         qs = qs.filter(stage=stage)
     ids = list(qs.values_list("id", flat=True))
     if not ids:
         return None
-    return pay_charges(ids, payment_method, user)
+    return pay_charges(ids, payment_method, user, payer_name, payer_account, payer_phone)
 
 
 def _sync_visit_invoice(visit: Visit):
@@ -274,6 +300,9 @@ def build_receipt_from_charges(charges, receipt_number, payment_method, paid_at)
     subtotal = sum(c.gross_amount for c in charges)
     insurance = sum(c.insurance_amount for c in charges)
     total = sum(c.patient_amount for c in charges)
+
+    # Grab payer info from first charge (all charges in a batch share the same payer)
+    first = charges[0]
     return {
         "receipt_number": receipt_number,
         "paid_at": paid_at.isoformat(),
@@ -282,16 +311,64 @@ def build_receipt_from_charges(charges, receipt_number, payment_method, paid_at)
             payment_method, payment_method
         ),
         "currency": "ETB",
-        "hospital_name": "DOSE Hospital",
+        "hospital_name": "HPMS",
         "patient_name": f"{patient.first_name} {patient.last_name}".strip(),
         "hospital_id": patient.hospital_id,
-        "registration_number": visit.registration_number or "",
         "visit_id": visit.id,
+        "payer_name": first.payer_name or "",
+        "payer_account": first.payer_account or "",
+        "payer_phone": first.payer_phone or "",
         "lines": lines,
         "subtotal": str(subtotal),
         "insurance_total": str(insurance),
         "total": str(total),
         "receipt_type": "SERVICE" if len(charges) == 1 else "COMBINED",
+    }
+
+
+def build_total_visit_receipt(visit_id):
+    """Build a consolidated receipt for ALL paid charges across a visit."""
+    visit = Visit.objects.select_related("patient").get(pk=visit_id)
+    paid_charges = list(
+        visit.billing_charges.filter(status="PAID")
+        .exclude(stage="PHARMACY")
+        .order_by("created_at")
+    )
+    if not paid_charges:
+        return None
+
+    patient = visit.patient
+    lines = [
+        {
+            "service_name": c.service_name,
+            "department": c.department,
+            "gross_amount": str(c.gross_amount),
+            "insurance_amount": str(c.insurance_amount),
+            "patient_amount": str(c.patient_amount),
+            "paid_at": c.paid_at.isoformat() if c.paid_at else "",
+            "receipt_number": c.receipt_number,
+        }
+        for c in paid_charges
+    ]
+    subtotal = sum(c.gross_amount for c in paid_charges)
+    insurance = sum(c.insurance_amount for c in paid_charges)
+    total = sum(c.patient_amount for c in paid_charges)
+
+    return {
+        "receipt_number": f"TOTAL-{visit.id}",
+        "paid_at": timezone.now().isoformat(),
+        "payment_method": "MULTIPLE",
+        "payment_method_label": "Multiple payments",
+        "currency": "ETB",
+        "hospital_name": "HPMS",
+        "patient_name": f"{patient.first_name} {patient.last_name}".strip(),
+        "hospital_id": patient.hospital_id,
+        "visit_id": visit.id,
+        "lines": lines,
+        "subtotal": str(subtotal),
+        "insurance_total": str(insurance),
+        "total": str(total),
+        "receipt_type": "TOTAL_VISIT",
     }
 
 
@@ -320,8 +397,10 @@ def _match_inventory(drug_name: str):
 def create_pharmacy_sale_for_prescription(prescription, pharmacist):
     from .models import PharmacySale, PharmacySaleLine
 
-    if hasattr(prescription, "pharmacy_sale") and prescription.pharmacy_sale_id:
-        return prescription.pharmacy_sale
+    if hasattr(prescription, "pharmacy_sale"):
+        existing_sale = prescription.pharmacy_sale.first()
+        if existing_sale:
+            return existing_sale
 
     visit = prescription.visit
     item, unit_price = _match_inventory(prescription.drug_name)
@@ -364,6 +443,37 @@ def complete_waived_pharmacy_sale(sale_id, user):
         _decrement_pharmacy_inventory(sale)
         _mark_prescription_dispensed(sale, now)
     return {"message": "Dispensed (waived).", "currency": "ETB"}
+
+
+def complete_deferred_pharmacy_sale(sale_id, user):
+    from .models import PharmacySale, HospitalService, BillingCharge
+
+    sale = PharmacySale.objects.select_related("visit__patient", "prescription").get(
+        pk=sale_id
+    )
+    now = timezone.now()
+    with transaction.atomic():
+        _decrement_pharmacy_inventory(sale)
+        _mark_prescription_dispensed(sale, now)
+        
+        ensure_default_services()
+        svc, _ = HospitalService.objects.get_or_create(code="PHARMACY_DEFERRED", defaults={"name": "Pharmacy Drugs", "service_type": "OTHER"})
+        BillingCharge.objects.create(
+            visit=sale.visit,
+            hospital_service=svc,
+            service_code="PHARMACY_DEFERRED",
+            service_name=f"Pharmacy: {sale.prescription.drug_name}",
+            department="Pharmacy",
+            gross_amount=sale.subtotal,
+            insurance_amount=sale.insurance_amount,
+            patient_amount=sale.patient_amount,
+            stage="DISCHARGE",
+            status="PENDING"
+        )
+        
+        sale.status = "DEFERRED"
+        sale.save()
+    return {"message": "Dispensed (payment deferred to discharge).", "currency": "ETB"}
 
 
 def _decrement_pharmacy_inventory(sale):
@@ -421,12 +531,11 @@ def pay_pharmacy_sale(sale_id, payment_method, user):
             payment_method, payment_method
         ),
         "currency": "ETB",
-        "hospital_name": "DOSE Hospital",
+        "hospital_name": "HPMS",
         "patient_name": (
             f"{patient.first_name} {patient.last_name}".strip() if patient else "Walk-in"
         ),
         "hospital_id": patient.hospital_id if patient else "",
-        "registration_number": visit.registration_number if visit else "",
         "visit_id": visit.id if visit else None,
         "lines": lines,
         "subtotal": str(sale.subtotal),

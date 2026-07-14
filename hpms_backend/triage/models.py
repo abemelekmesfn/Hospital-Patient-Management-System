@@ -49,13 +49,6 @@ class Visit(models.Model):
         auto_now_add=True
     )
 
-    registration_number = models.CharField(
-        max_length=20,
-        unique=True,
-        null=True,
-        blank=True
-    )
-
     created_at = models.DateTimeField(
         auto_now_add=True
     )
@@ -82,34 +75,6 @@ class Visit(models.Model):
 
     def __str__(self):
         return f"Visit {self.id} - {self.patient}"
-
-    @classmethod
-    def allocate_next_registration_number(cls, year=None):
-        """
-        Next REG-{year}-{seq} where seq is one greater than the max existing
-        suffix for that year. Avoids duplicates from ordering by id or string sort.
-        """
-        year = year or datetime.now().year
-        prefix = f"REG-{year}-"
-        qs = (
-            cls.objects.filter(registration_number__startswith=prefix)
-            .exclude(registration_number__isnull=True)
-            .exclude(registration_number="")
-        )
-        max_seq = 0
-        pat = re.compile(rf"^{re.escape(prefix)}(\d+)$")
-        for reg in qs.values_list("registration_number", flat=True):
-            m = pat.match(reg or "")
-            if m:
-                max_seq = max(max_seq, int(m.group(1)))
-        return f"{prefix}{str(max_seq + 1).zfill(4)}"
-
-    def save(self, *args, **kwargs):
-
-        if not self.registration_number and self.status == "WAITING_DOCTOR":
-            self.registration_number = self.allocate_next_registration_number()
-
-        super().save(*args, **kwargs)
 
 class NextOfKin(models.Model):
 
@@ -185,6 +150,25 @@ class Triage(models.Model):
     priority = models.CharField(
         max_length=20,
         choices=PRIORITY_CHOICES
+    )
+
+    doctor_department = models.CharField(
+        max_length=20,
+        choices=(
+            ('OPD', 'OPD (Outpatient Department)'),
+            ('PED', 'PED (Pediatrics)'),
+            ('OBGYN', 'OB/GYN (Obstetrics and Gynecology)'),
+            ('IM', 'IM / INT MED (Internal Medicine)'),
+            ('ORTHO', 'ORTHO (Orthopedics)'),
+            ('CARD', 'CARD (Cardiology)'),
+            ('DERM', 'DERM (Dermatology)'),
+            ('ENT', 'ENT (Otolaryngology)'),
+            ('OPH', 'OPH / OPHTH (Ophthalmology)'),
+            ('EMERG', 'EMERG (Emergency)'),
+        ),
+        null=True,
+        blank=True,
+        help_text="Recommended department for the doctor based on consultation",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

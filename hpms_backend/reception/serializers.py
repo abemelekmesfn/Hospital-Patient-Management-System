@@ -53,13 +53,13 @@ class VisitDetailSerializer(serializers.ModelSerializer):
     respiratory_rate = serializers.SerializerMethodField()
     triage_id = serializers.SerializerMethodField()
     triage_patient_name = serializers.SerializerMethodField()
+    triage_doctor_department = serializers.SerializerMethodField()
 
     class Meta:
         model = Visit
         fields = [
             "id",
             "arrival_time",
-            "arrival_mode",
             "patient",
 
             "triage_priority",
@@ -70,6 +70,7 @@ class VisitDetailSerializer(serializers.ModelSerializer):
             "respiratory_rate",
             "triage_id",
             "triage_patient_name",
+            "triage_doctor_department",
         ]
 
     def get_triage_priority(self, obj):
@@ -104,6 +105,10 @@ class VisitDetailSerializer(serializers.ModelSerializer):
         triage = getattr(obj, "triage", None)
         return (triage.triage_patient_name or "").strip() if triage else ""
 
+    def get_triage_doctor_department(self, obj):
+        triage = getattr(obj, "triage", None)
+        return triage.doctor_department if triage else ""
+
     def create(self, validated_data):
         triage = Triage.objects.get(id=validated_data["triage_id"])
 
@@ -128,17 +133,9 @@ class VisitDetailSerializer(serializers.ModelSerializer):
         patient.date_of_birth = validated_data.get("date_of_birth", patient.date_of_birth)
         patient.save()
 
-        # Generate registration number (reset yearly)
-        year = timezone.now().year
-        last_visit = Visit.objects.filter(registration_number__startswith=f"REG-{year}").order_by("-id").first()
-        new_number = int(last_visit.registration_number.split("-")[-1]) + 1 if last_visit else 1
-        registration_number = f"REG-{year}-{str(new_number).zfill(4)}"
-
         # Create visit (do NOT pass triage)
         visit = Visit.objects.create(
-            patient=patient,
-            arrival_mode=validated_data["arrival_mode"],
-            registration_number=registration_number
+            patient=patient
         )
 
         # Update triage to point to visit
@@ -165,8 +162,7 @@ class FinalizeRegistrationSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
     date_of_birth = serializers.DateField(write_only=True, required=False)
     
-    # Arrival mode and triage ID from the frontend
-    arrival_mode = serializers.CharField(write_only=True)
+    # Triage ID from the frontend
     triage_id = serializers.IntegerField(write_only=True)
     
     # Next-of-kin info
@@ -194,7 +190,7 @@ class FinalizeRegistrationSerializer(serializers.ModelSerializer):
         model = Visit
         fields = [
             'first_name', 'last_name', 'phone', 'date_of_birth',
-            'arrival_mode', 'triage_id',
+            'triage_id',
             'kin_name', 'kin_phone', 'kin_relationship',
             'insurance_type', 'insurance_coverage_percent', 'billing_exempt',
         ]
@@ -219,14 +215,6 @@ class FinalizeRegistrationSerializer(serializers.ModelSerializer):
         if "billing_exempt" in validated_data:
             patient.billing_exempt = validated_data["billing_exempt"]
         patient.save()
-
-        # Update visit info
-        visit.arrival_mode = validated_data["arrival_mode"]
-
-        if not visit.registration_number:
-            visit.registration_number = Visit.allocate_next_registration_number(
-                year=timezone.now().year
-            )
 
         visit.save()
 

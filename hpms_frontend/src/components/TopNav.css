@@ -3,7 +3,7 @@
 }
 
 .hpms-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: #f5f5f5;
@@ -152,5 +152,27 @@
   .hpms-user-name,
   .hpms-user-sub {
     max-width: 140px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hpms-user-name,
+  .hpms-user-sub {
+    display: none;
+  }
+  
+  .hpms-user-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .hpms-logout span:not(.hpms-logout-icon) {
+    display: none;
+  }
+
+  .hpms-logout {
+    padding: 8px;
+    border-radius: 50%;
   }
 }

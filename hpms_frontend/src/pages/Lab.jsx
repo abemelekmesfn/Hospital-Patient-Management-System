@@ -24,6 +24,7 @@ export default function Lab() {
   const [selected, setSelected] = useState(null);
   const [results, setResults] = useState({});
   const [banner, setBanner] = useState(null);
+  const [showMobileQueue, setShowMobileQueue] = useState(true);
 
   const fetchQueue = useCallback(async () => {
     if (!localStorage.getItem("access")) {
@@ -85,6 +86,7 @@ export default function Lab() {
   const selectVisit = (entry) => {
     setSelected(entry);
     setResults({});
+    setShowMobileQueue(false);
   };
 
   const tableRows = selected
@@ -155,7 +157,7 @@ export default function Lab() {
             </div>
           )}
 
-          <div className="lab-main-row">
+          <div className={`lab-main-row ${showMobileQueue ? 'mobile-show-queue' : 'mobile-hide-queue'}`}>
             <div className="lab-left">
               <h3>Specimen Queue</h3>
 
@@ -194,6 +196,12 @@ export default function Lab() {
                 <p>Select a patient from the queue.</p>
               ) : (
                 <>
+                  <button 
+                    className="mobile-back-btn" 
+                    onClick={() => setShowMobileQueue(true)}
+                  >
+                    ⬅ Back to Queue
+                  </button>
                   <h2>{selected.patient_name}</h2>
                   <p className="lab-selected-test">
                     Enter results for all ordered tests in one table.

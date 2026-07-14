@@ -5,6 +5,9 @@ export const ADMIN_SECTIONS = [
   { id: "analytics", label: "Analytics", icon: "📊" },
   { id: "audit", label: "Audit Logs", icon: "📋" },
   { id: "inventory", label: "Inventory", icon: "📦" },
+  { id: "insurance", label: "Insurance Claims", icon: "🛡️" },
+  { id: "wards", label: "Wards & Beds", icon: "🛏️" },
+  { id: "reports", label: "Reports", icon: "📝" },
 ];
 
 export default function AdminSidebar({ active, onNavigate, onLogout }) {

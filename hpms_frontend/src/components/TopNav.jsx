@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./TopNav.css";
 
 const STORAGE_KEY = "hpms_user";
@@ -25,6 +25,7 @@ function formatRole(role) {
  */
 export default function TopNav({ title, center }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useMemo(() => readStoredUser(), []);
 
   const first = (user?.first_name || "").trim();
@@ -69,6 +70,20 @@ export default function TopNav({ title, center }) {
             )}
           </div>
         </div>
+
+        {user?.role === "DOCTOR" && (
+          location.pathname === "/doctor-reports" ? (
+            <button type="button" className="hpms-logout" onClick={() => navigate("/doctor")} style={{ transition: "all 0.3s ease" }}>
+              <span className="hpms-logout-icon" aria-hidden="true">🏠</span>
+              <span>Workplace</span>
+            </button>
+          ) : (
+            <button type="button" className="hpms-logout" onClick={() => navigate("/doctor-reports")} style={{ transition: "all 0.3s ease" }}>
+              <span className="hpms-logout-icon" aria-hidden="true">📊</span>
+              <span>Reports</span>
+            </button>
+          )
+        )}
 
         <button type="button" className="hpms-logout" onClick={handleLogout}>
           <span className="hpms-logout-icon" aria-hidden="true">

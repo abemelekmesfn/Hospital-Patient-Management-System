@@ -46,8 +46,8 @@ class Prescription(models.Model):
 
     drug_name = models.CharField(max_length=255)
     dosage = models.CharField(max_length=100)
-    frequency = models.CharField(max_length=100)
-    duration = models.CharField(max_length=100)
+    frequency = models.CharField(max_length=100, blank=True, default="-")
+    duration = models.CharField(max_length=100, blank=True, default="-")
 
     PHARMACY_STATUS_CHOICES = [
         ("PENDING", "Pending"),
@@ -148,3 +148,38 @@ class NurseTask(models.Model):
 
     def __str__(self):
         return self.task_description
+
+
+class Admission(models.Model):
+    visit = models.OneToOneField(
+        Visit, on_delete=models.CASCADE, related_name="admission"
+    )
+    ward = models.ForeignKey(
+        "administration.Ward", on_delete=models.SET_NULL, null=True
+    )
+    bed = models.ForeignKey(
+        "administration.Bed", on_delete=models.SET_NULL, null=True
+    )
+    admission_note = models.TextField(blank=True, default="")
+    admitted_at = models.DateTimeField(auto_now_add=True)
+    discharged_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Admission for Visit {self.visit_id}"
+
+
+class PhysicalExamination(models.Model):
+    visit = models.ForeignKey(
+        Visit, on_delete=models.CASCADE, related_name="physical_examinations"
+    )
+    doctor = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True
+    )
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Exam {self.id} - Visit {self.visit_id}"

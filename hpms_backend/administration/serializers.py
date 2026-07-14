@@ -1,10 +1,13 @@
 from rest_framework import serializers
 from users.models import User
-from .models import AuditLog, InventoryItem, MAX_INVENTORY_ITEMS
+from .models import AuditLog, InventoryItem, MAX_INVENTORY_ITEMS, Ward, Bed
 
 
 class UserSerializer(serializers.ModelSerializer):
     can_disable = serializers.SerializerMethodField()
+    daily_handled = serializers.IntegerField(read_only=True, default=0)
+    weekly_handled = serializers.IntegerField(read_only=True, default=0)
+    monthly_handled = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = User
@@ -18,6 +21,10 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "can_disable",
+            "department",
+            "daily_handled",
+            "weekly_handled",
+            "monthly_handled",
         ]
 
     def get_can_disable(self, obj):
@@ -31,6 +38,7 @@ class CreateUserSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=User.ROLE_CHOICES)
+    department = serializers.ChoiceField(choices=User.DEPARTMENT_CHOICES, required=False, allow_null=True)
 
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():
@@ -52,6 +60,7 @@ class CreateUserSerializer(serializers.Serializer):
             last_name=validated_data.get("last_name", ""),
             email=validated_data.get("email", ""),
             role=validated_data["role"],
+            department=validated_data.get("department", None) if validated_data["role"] == "DOCTOR" else None,
             is_active=True,
         )
 
@@ -114,3 +123,17 @@ class InventoryItemCreateSerializer(serializers.ModelSerializer):
                 "Remove or update existing stock before adding more."
             )
         return attrs
+
+
+class BedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bed
+        fields = ["id", "ward", "bed_number", "is_occupied"]
+
+
+class WardSerializer(serializers.ModelSerializer):
+    beds = BedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Ward
+        fields = ["id", "name", "ward_type", "created_at", "beds"]

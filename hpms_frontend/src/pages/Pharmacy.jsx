@@ -40,6 +40,7 @@ export default function Pharmacy() {
   const [payModal, setPayModal] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [dispensing, setDispensing] = useState(false);
+  const [showMobileQueue, setShowMobileQueue] = useState(true);
 
   const fetchQueue = useCallback(async () => {
     if (!localStorage.getItem("access")) {
@@ -109,8 +110,8 @@ export default function Pharmacy() {
         if (merged[r.id] === undefined) {
           merged[r.id] = {
             dosage: r.dosage && r.dosage !== "—" ? String(r.dosage) : "",
-            frequency:
-              r.frequency && r.frequency !== "—" ? String(r.frequency) : "",
+            frequency: r.frequency && r.frequency !== "—" ? String(r.frequency) : "",
+            duration: r.duration && r.duration !== "—" ? String(r.duration) : "",
           };
         }
       }
@@ -194,15 +195,15 @@ export default function Pharmacy() {
     setSavingRxId(id);
     try {
       await API.patch(`/pharmacy/prescription/${id}/`, {
-        dosage: vals.dosage,
         frequency: vals.frequency,
+        duration: vals.duration,
       });
       await fetchQueue();
     } catch (err) {
       console.error(err);
       alert(
         err.response?.data?.detail ||
-          "Could not save changes. Ensure dosage and frequency are filled."
+          "Could not save changes. Ensure frequency is filled."
       );
     } finally {
       setSavingRxId(null);
@@ -213,7 +214,7 @@ export default function Pharmacy() {
     <div className="hpms-shell">
       <TopNav title="Pharmacy" />
       <div className="hpms-shell-content">
-        <div className="pharmacy-container">
+        <div className={`pharmacy-container ${showMobileQueue ? 'mobile-show-queue' : 'mobile-hide-queue'}`}>
           <div className="pharmacy-left">
             <h3>Prescription queue</h3>
             {queueError && (
@@ -230,7 +231,10 @@ export default function Pharmacy() {
                 className={`queue-card ${priorityClass(g.priority)} ${
                   selectedVisitId === g.visit_id ? "active" : ""
                 }`}
-                onClick={() => setSelectedVisitId(g.visit_id)}
+                onClick={() => {
+                  setSelectedVisitId(g.visit_id);
+                  setShowMobileQueue(false);
+                }}
               >
                 <h4>{g.patient_name}</h4>
                 <p className="queue-card-meta">
@@ -246,6 +250,12 @@ export default function Pharmacy() {
               <p>Select a patient</p>
             ) : (
               <>
+                <button 
+                  className="mobile-back-btn" 
+                  onClick={() => setShowMobileQueue(true)}
+                >
+                  ⬅ Back to Queue
+                </button>
                 <div className="dispense-header">
                   <h2>{selectedGroup.patient_name}</h2>
                 </div>
@@ -256,6 +266,7 @@ export default function Pharmacy() {
                       <th>Drug</th>
                       <th>Dosage</th>
                       <th>Frequency</th>
+                      <th>Duration</th>
                       <th>Dispense</th>
                       <th>Save edits</th>
                     </tr>
@@ -265,25 +276,22 @@ export default function Pharmacy() {
                       const edits = rxEdits[drug.id] ?? {
                         dosage: drug.dosage ?? "",
                         frequency: drug.frequency ?? "",
+                        duration: drug.duration ?? "",
                       };
                       const busyRx = savingRxId === drug.id;
                       return (
                         <tr key={drug.id}>
                           <td>{drug.drug_name}</td>
                           <td>
-                            <input
-                              type="text"
-                              className="pharm-cell-input"
-                              value={edits.dosage}
-                              onChange={(e) =>
-                                updateRxEdit(drug.id, "dosage", e.target.value)
-                              }
-                              aria-label={`Dosage for ${drug.drug_name}`}
-                            />
+                            <span className="pharm-dosage-display">
+                              {drug.dosage}
+                            </span>
                           </td>
                           <td>
                             <input
-                              type="text"
+                              type="number"
+                              min="0"
+                              step="any"
                               className="pharm-cell-input"
                               value={edits.frequency}
                               onChange={(e) =>
@@ -294,6 +302,23 @@ export default function Pharmacy() {
                                 )
                               }
                               aria-label={`Frequency for ${drug.drug_name}`}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              className="pharm-cell-input"
+                              value={edits.duration}
+                              onChange={(e) =>
+                                updateRxEdit(
+                                  drug.id,
+                                  "duration",
+                                  e.target.value
+                                )
+                              }
+                              aria-label={`Duration for ${drug.drug_name}`}
                             />
                           </td>
                           <td>

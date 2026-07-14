@@ -70,9 +70,15 @@ class DispenseDrugView(APIView):
         payment_method = request.data.get("payment_method")
         sale = billing_services.create_pharmacy_sale_for_prescription(item, request.user)
 
+        is_deferred = billing_services.visit_is_emergency_deferred(item.visit)
+
         if sale.status == "WAIVED":
             billing_services.complete_waived_pharmacy_sale(sale.id, request.user)
             return Response({"message": "Dispensed (billing waived).", "receipt": None})
+
+        if is_deferred:
+            receipt = billing_services.complete_deferred_pharmacy_sale(sale.id, request.user)
+            return Response({"message": "Dispensed (payment deferred to discharge).", "receipt": receipt})
 
         if not payment_method:
             return Response(

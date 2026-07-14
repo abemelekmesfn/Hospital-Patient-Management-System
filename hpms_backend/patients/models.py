@@ -19,6 +19,7 @@ class Patient(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
 
     phone = models.CharField(max_length=20, blank=True)
+    address = models.CharField(max_length=255, blank=True, default="")
 
     is_unknown = models.BooleanField(default=False)
 
@@ -31,6 +32,7 @@ class Patient(models.Model):
     BILLING_EXEMPT = (
         ("NONE", "Standard billing"),
         ("EMPLOYEE", "Hospital employee"),
+        ("DEBT", "Debt / Pay at discharge"),
         ("OTHER", "Other exempt"),
     )
 

@@ -32,7 +32,7 @@ class CashierQueueView(BillingPermissionMixin, APIView):
     def get(self, request):
         pending = BillingCharge.objects.filter(
             status="PENDING"
-        ).exclude(stage="PHARMACY").select_related("visit__patient", "visit__triage")
+        ).exclude(stage="PHARMACY").exclude(visit__is_admitted=True).select_related("visit__patient", "visit__triage")
 
         by_visit = {}
         for ch in pending:
@@ -44,7 +44,6 @@ class CashierQueueView(BillingPermissionMixin, APIView):
                     "visit_id": vid,
                     "patient_name": f"{p.first_name} {p.last_name}".strip(),
                     "hospital_id": p.hospital_id,
-                    "registration_number": v.registration_number,
                     "billing_deferred": v.billing_deferred,
                     "insurance_type": p.insurance_type,
                     "billing_exempt": p.billing_exempt,
@@ -75,7 +74,6 @@ class VisitChargesView(BillingPermissionMixin, APIView):
                 "visit_id": visit.id,
                 "patient_name": f"{visit.patient.first_name} {visit.patient.last_name}".strip(),
                 "hospital_id": visit.patient.hospital_id,
-                "registration_number": visit.registration_number,
                 "billing_deferred": visit.billing_deferred,
                 "insurance_type": visit.patient.insurance_type,
                 "insurance_coverage_percent": visit.patient.insurance_coverage_percent,
@@ -89,6 +87,9 @@ class PayChargesView(BillingPermissionMixin, APIView):
     def post(self, request):
         charge_ids = request.data.get("charge_ids") or []
         payment_method = request.data.get("payment_method")
+        payer_name = request.data.get("payer_name", "")
+        payer_account = request.data.get("payer_account", "")
+        payer_phone = request.data.get("payer_phone", "")
         if not charge_ids or not payment_method:
             return Response(
                 {"detail": "charge_ids and payment_method are required."},
@@ -100,7 +101,12 @@ class PayChargesView(BillingPermissionMixin, APIView):
                 {"detail": f"payment_method must be one of: {', '.join(sorted(valid))}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        receipt = services.pay_charges(charge_ids, payment_method, request.user)
+        receipt = services.pay_charges(
+            charge_ids, payment_method, request.user,
+            payer_name=payer_name,
+            payer_account=payer_account,
+            payer_phone=payer_phone,
+        )
         if not receipt:
             return Response(
                 {"detail": "No pending charges found for those ids."},
@@ -113,12 +119,20 @@ class PayVisitBulkView(BillingPermissionMixin, APIView):
     def post(self, request, visit_id):
         payment_method = request.data.get("payment_method")
         stage = request.data.get("stage")
+        payer_name = request.data.get("payer_name", "")
+        payer_account = request.data.get("payer_account", "")
+        payer_phone = request.data.get("payer_phone", "")
         if not payment_method:
             return Response(
                 {"detail": "payment_method is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        receipt = services.pay_visit_bulk(visit_id, payment_method, request.user, stage=stage)
+        receipt = services.pay_visit_bulk(
+            visit_id, payment_method, request.user, stage=stage,
+            payer_name=payer_name,
+            payer_account=payer_account,
+            payer_phone=payer_phone,
+        )
         if not receipt:
             return Response(
                 {"detail": "No pending charges for this visit."},
@@ -142,6 +156,19 @@ class ReceiptDetailView(BillingPermissionMixin, APIView):
             ch.paid_at or timezone.now(),
         )
         return Response(payload)
+
+
+class TotalVisitReceiptView(BillingPermissionMixin, APIView):
+    """Consolidated receipt for ALL paid charges across a visit."""
+
+    def get(self, request, visit_id):
+        receipt = services.build_total_visit_receipt(visit_id)
+        if not receipt:
+            return Response(
+                {"detail": "No paid charges for this visit."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(receipt)
 
 
 # Legacy endpoints (invoice-based queue) — redirect logic to charges

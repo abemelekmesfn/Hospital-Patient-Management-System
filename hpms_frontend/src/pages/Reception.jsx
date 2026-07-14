@@ -38,6 +38,7 @@ export default function Reception() {
   const [selected, setSelected] = useState(null);
   const [toast, setToast] = useState(null);
   const toastDismissRef = useRef(null);
+  const [showMobileQueue, setShowMobileQueue] = useState(true);
 
   const showToast = useCallback((message, variant = "info") => {
     if (toastDismissRef.current) {
@@ -74,6 +75,8 @@ export default function Reception() {
         first_name,
         last_name,
       }));
+
+      setShowMobileQueue(false);
     } catch (err) {
       console.error(err);
       showToast("Could not load patient details.", "error");
@@ -131,30 +134,38 @@ export default function Reception() {
     }
   };
 
-  const isValid =
-    Boolean(form.first_name?.trim()) &&
-    Boolean(form.phone?.trim()) &&
-    Boolean(form.arrival_mode);
+  const calculateAge = (dob) => {
+    if (!dob) return -1;
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const isNameValid = /^[A-Za-z\s]+$/.test(form.first_name.trim());
+  const isLastNameValid = !form.last_name || /^[A-Za-z\s]+$/.test(form.last_name.trim());
+  const isPhoneValid = /^09\d{8}$/.test(form.phone.trim());
+  const dobAge = calculateAge(form.date_of_birth);
+  const isDobValid = !form.date_of_birth || (dobAge >= 0 && dobAge <= 150);
+  
+  const isKinNameValid = !form.kin_name || /^[A-Za-z\s]+$/.test(form.kin_name.trim());
+  const isKinPhoneValid = !form.kin_phone || /^09\d{8}$/.test(form.kin_phone.trim());
+
+  const isValid = isNameValid && isLastNameValid && isPhoneValid && isDobValid && isKinNameValid && isKinPhoneValid;
 
   const handleFinalize = async () => {
     if (!isValid) {
-      showToast("Please fill required fields (name, phone, arrival mode).", "error");
+      showToast("Please fill all fields correctly.", "error");
       return;
     }
-
-    const arrivalModeBackend =
-      form.arrival_mode === "AMBULANCE"
-        ? "EMS"
-        : form.arrival_mode === "PRIVATE"
-          ? "PRIVATE"
-          : form.arrival_mode === "WALKING"
-            ? "TAXI"
-            : "PRIVATE";
 
     try {
       await API.post("/reception/finalize/", {
         ...form,
-        arrival_mode: arrivalModeBackend,
         triage_id: selected.triage_id,
       });
 
@@ -191,258 +202,258 @@ export default function Reception() {
     <div className="hpms-shell">
       <TopNav title="Reception" />
       <div className="hpms-shell-content">
-    <div className="reception-container">
-      {toast && (
-        <div className={`reception-toast ${toast.variant}`} role="status">
-          <span aria-hidden="true" className="reception-toast-icon">
-            {toast.variant === "success" ? "✓" : toast.variant === "error" ? "!" : "i"}
-          </span>
-          <span>{toast.message}</span>
-          <button
-            type="button"
-            className="reception-toast-close"
-            onClick={() => setToast(null)}
-            aria-label="Dismiss"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <div className="triage-feed">
-        <h3>Pending registration</h3>
-        <p className="triage-feed-hint">Select a patient to open the form on the right.</p>
-
-        {queue.length === 0 && (
-          <p className="triage-feed-empty">No patients waiting.</p>
-        )}
-
-        {queue.map((patient) => {
-          const isActive = selected?.id === patient.id;
-          return (
-            <div
-              key={patient.id}
-              role="button"
-              tabIndex={0}
-              className={`triage-card priority-${patient.priority || "unknown"} ${
-                isActive ? "selected" : ""
-              }`}
-              onClick={() => handleSelect(patient.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleSelect(patient.id);
-                }
-              }}
-            >
-              <div className="triage-card-accent" aria-hidden="true" />
-              <div className="triage-card-body">
-                <h4>{patient.name}</h4>
-                <p className="triage-card-complaint">{patient.chief_complaint}</p>
-                {patient.priority && (
-                  <span className="triage-card-pill">{patient.priority}</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="reception-form">
-        {!selected ? (
-          <div className="reception-placeholder">
-            <p>Select a patient from the list to begin registration.</p>
-          </div>
-        ) : (
-          <>
-            <h2>Patient registration</h2>
-
-            <div className="form-group reception-patient-search">
-              <label>
-                Search returning patient
-                <span className="label-hint">
-                  Type to find a previous patient; fields fill from triage when available
-                </span>
-              </label>
-              <PatientNameAutocomplete
-                value={patientSearchQuery}
-                onChange={setPatientSearchQuery}
-                onSelect={(p) => {
-                  if (p) void applyReturningPatient(p);
-                  setPatientSearchQuery("");
-                }}
-                placeholder="Search patient name or ID..."
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Triage category</label>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reg-first-name">
-                First name
-                <span className="label-hint">From triage when provided, or UNKNOWN</span>
-              </label>
-              <input
-                id="reg-first-name"
-                name="first_name"
-                value={form.first_name}
-                onChange={handleChange}
-                autoComplete="given-name"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reg-last-name">Last name</label>
-              <input
-                id="reg-last-name"
-                name="last_name"
-                value={form.last_name}
-                onChange={handleChange}
-                autoComplete="family-name"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reg-phone">Phone</label>
-              <input
-                id="reg-phone"
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="09XXXXXXXX"
-                inputMode="tel"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reg-dob">Date of birth</label>
-              <input
-                id="reg-dob"
-                type="date"
-                name="date_of_birth"
-                value={form.date_of_birth}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="reg-address">Address</label>
-              <input
-                id="reg-address"
-                name="address"
-                value={form.address}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Mode of arrival</label>
-
-              <div className="arrival-tiles">
-                {["AMBULANCE", "PRIVATE", "WALKING"].map((mode) => (
-                  <div
-                    key={mode}
-                    role="button"
-                    tabIndex={0}
-                    className={`tile ${form.arrival_mode === mode ? "active" : ""}`}
-                    onClick={() => setForm({ ...form, arrival_mode: mode })}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setForm({ ...form, arrival_mode: mode });
-                      }
-                    }}
-                  >
-                    {mode}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="kin-box billing-box">
-              <h4>Billing & insurance</h4>
-              <label htmlFor="reg-insurance">Insurance</label>
-              <select
-                id="reg-insurance"
-                name="insurance_type"
-                value={form.insurance_type}
-                onChange={handleChange}
+        <div className={`reception-container ${showMobileQueue ? 'mobile-show-queue' : 'mobile-hide-queue'}`}>
+          {toast && (
+            <div className={`reception-toast ${toast.variant}`} role="status">
+              <span aria-hidden="true" className="reception-toast-icon">
+                {toast.variant === "success" ? "✓" : toast.variant === "error" ? "!" : "i"}
+              </span>
+              <span>{toast.message}</span>
+              <button
+                type="button"
+                className="reception-toast-close"
+                onClick={() => setToast(null)}
+                aria-label="Dismiss"
               >
-                <option value="NONE">No insurance</option>
-                <option value="PARTIAL">Partial coverage</option>
-                <option value="FULL">Full coverage</option>
-              </select>
-              {form.insurance_type === "PARTIAL" && (
-                <>
-                  <label htmlFor="reg-ins-pct">Coverage % (per service)</label>
+                ×
+              </button>
+            </div>
+          )}
+
+          <div className="triage-feed">
+            <h3>Pending registration</h3>
+            <p className="triage-feed-hint">Select a patient to open the form on the right.</p>
+
+            {queue.length === 0 && (
+              <p className="triage-feed-empty">No patients waiting.</p>
+            )}
+
+            {queue.map((patient) => {
+              const isActive = selected?.id === patient.id;
+              return (
+                <div
+                  key={patient.id}
+                  role="button"
+                  tabIndex={0}
+                  className={`triage-card priority-${patient.priority || "unknown"} ${isActive ? "selected" : ""
+                    }`}
+                  onClick={() => handleSelect(patient.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelect(patient.id);
+                    }
+                  }}
+                >
+                  <div className="triage-card-accent" aria-hidden="true" />
+                  <div className="triage-card-body">
+                    <h4>{patient.name}</h4>
+                    <p className="triage-card-complaint">{patient.chief_complaint}</p>
+                    {patient.priority && (
+                      <span className="triage-card-pill">{patient.priority}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="reception-form">
+            {!selected ? (
+              <div className="reception-placeholder">
+                <p>Select a patient from the list to begin registration.</p>
+              </div>
+            ) : (
+              <>
+                <button
+                  className="mobile-back-btn"
+                  onClick={() => setShowMobileQueue(true)}
+                >
+                  ⬅ Back to Queue
+                </button>
+                <h2>Patient registration</h2>
+
+                <div className="form-group reception-patient-search">
+                  <label>
+                    Search returning patient
+                    <span className="label-hint">
+                      Type to find a previous patient; fields fill from triage when available
+                    </span>
+                  </label>
+                  <PatientNameAutocomplete
+                    value={patientSearchQuery}
+                    onChange={setPatientSearchQuery}
+                    onSelect={(p) => {
+                      if (p) void applyReturningPatient(p);
+                      setPatientSearchQuery("");
+                    }}
+                    placeholder="Search patient name or ID..."
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Triage category</label>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="reg-first-name">
+                    First name
+                    <span className="label-hint">From triage when provided, or UNKNOWN</span>
+                  </label>
                   <input
-                    id="reg-ins-pct"
-                    type="number"
-                    min={0}
-                    max={100}
-                    name="insurance_coverage_percent"
-                    value={form.insurance_coverage_percent}
+                    id="reg-first-name"
+                    name="first_name"
+                    value={form.first_name}
+                    onChange={handleChange}
+                    autoComplete="given-name"
+                    className={form.first_name && !isNameValid ? "invalid-input" : ""}
+                  />
+                  {form.first_name && !isNameValid && <span className="validation-error">Only letters and spaces</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="reg-last-name">Last name</label>
+                  <input
+                    id="reg-last-name"
+                    name="last_name"
+                    value={form.last_name}
+                    onChange={handleChange}
+                    autoComplete="family-name"
+                    className={form.last_name && !isLastNameValid ? "invalid-input" : ""}
+                  />
+                  {form.last_name && !isLastNameValid && <span className="validation-error">Only letters and spaces</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="reg-phone">Phone</label>
+                  <input
+                    id="reg-phone"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="09XXXXXXXX"
+                    inputMode="tel"
+                    className={form.phone && !isPhoneValid ? "invalid-input" : ""}
+                  />
+                  {form.phone && !isPhoneValid && <span className="validation-error">Must be 10 digits starting with 09</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="reg-dob">Date of birth</label>
+                  <input
+                    id="reg-dob"
+                    type="date"
+                    name="date_of_birth"
+                    value={form.date_of_birth}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={handleChange}
+                    className={form.date_of_birth && !isDobValid ? "invalid-input" : ""}
+                  />
+                  {form.date_of_birth && !isDobValid && <span className="validation-error">Invalid age (must be 0-150 years)</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="reg-address">Address</label>
+                  <input
+                    id="reg-address"
+                    name="address"
+                    value={form.address}
                     onChange={handleChange}
                   />
-                </>
-              )}
-              <label htmlFor="reg-exempt">Billing exemption</label>
-              <select
-                id="reg-exempt"
-                name="billing_exempt"
-                value={form.billing_exempt}
-                onChange={handleChange}
-              >
-                <option value="NONE">Standard billing</option>
-                <option value="EMPLOYEE">Hospital employee (free)</option>
-                <option value="OTHER">Other exempt</option>
-              </select>
-            </div>
+                </div>
 
-            <div className="kin-box">
-              <h4>Next of kin</h4>
 
-              <input
-                name="kin_name"
-                placeholder="Name"
-                value={form.kin_name}
-                onChange={handleChange}
-              />
 
-              <input
-                name="kin_phone"
-                placeholder="Phone"
-                value={form.kin_phone}
-                onChange={handleChange}
-              />
 
-              <select
-                name="kin_relationship"
-                value={form.kin_relationship}
-                onChange={handleChange}
-              >
-                <option value="">Relationship</option>
-                <option>Spouse</option>
-                <option>Parent</option>
-                <option>Sibling</option>
-                <option>Other</option>
-              </select>
-            </div>
 
-            <button
-              type="button"
-              className="finalize-btn"
-              disabled={!isValid}
-              onClick={handleFinalize}
-            >
-              Finalize registration
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+                <div className="kin-box billing-box">
+                  <h4>Billing & insurance</h4>
+                  <label htmlFor="reg-insurance">Insurance</label>
+                  <select
+                    id="reg-insurance"
+                    name="insurance_type"
+                    value={form.insurance_type}
+                    onChange={handleChange}
+                  >
+                    <option value="NONE">No insurance</option>
+                    <option value="PARTIAL">Partial coverage</option>
+                    <option value="FULL">Full coverage</option>
+                  </select>
+                  {form.insurance_type === "PARTIAL" && (
+                    <>
+                      <label htmlFor="reg-ins-pct">Coverage % (per service)</label>
+                      <input
+                        id="reg-ins-pct"
+                        type="number"
+                        min={0}
+                        max={100}
+                        name="insurance_coverage_percent"
+                        value={form.insurance_coverage_percent}
+                        onChange={handleChange}
+                      />
+                    </>
+                  )}
+                  <label htmlFor="reg-exempt">Billing exemption</label>
+                  <select
+                    id="reg-exempt"
+                    name="billing_exempt"
+                    value={form.billing_exempt}
+                    onChange={handleChange}
+                  >
+                    <option value="NONE">Standard billing</option>
+                    <option value="EMPLOYEE">Hospital employee (free)</option>
+                    <option value="DEBT">Debt (Pay at Discharge)</option>
+                    <option value="OTHER">Other exempt</option>
+                  </select>
+                </div>
+
+                <div className="kin-box">
+                  <h4>Next of kin</h4>
+
+                  <input
+                    name="kin_name"
+                    placeholder="Name"
+                    value={form.kin_name}
+                    onChange={handleChange}
+                    className={form.kin_name && !isKinNameValid ? "invalid-input" : ""}
+                  />
+                  {form.kin_name && !isKinNameValid && <span className="validation-error">Only letters and spaces</span>}
+
+                  <input
+                    name="kin_phone"
+                    placeholder="Phone"
+                    value={form.kin_phone}
+                    onChange={handleChange}
+                    inputMode="tel"
+                    className={form.kin_phone && !isKinPhoneValid ? "invalid-input" : ""}
+                  />
+                  {form.kin_phone && !isKinPhoneValid && <span className="validation-error">Must be 10 digits starting with 09</span>}
+
+                  <select
+                    name="kin_relationship"
+                    value={form.kin_relationship}
+                    onChange={handleChange}
+                  >
+                    <option value="">Relationship</option>
+                    <option>Spouse</option>
+                    <option>Parent</option>
+                    <option>Sibling</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  className="finalize-btn"
+                  disabled={!isValid}
+                  onClick={handleFinalize}
+                >
+                  Finalize registration
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

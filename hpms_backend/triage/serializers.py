@@ -14,4 +14,5 @@ class TriageSerializer(serializers.ModelSerializer):
             "chief_complaint",
             "priority",
             "triage_patient_name",
+            "doctor_department",
         ]

@@ -16,8 +16,6 @@ class VisitTriageHistorySerializer(serializers.Serializer):
 
 
 class VisitReceptionHistorySerializer(serializers.Serializer):
-    registration_number = serializers.CharField(allow_null=True)
-    arrival_mode = serializers.CharField(allow_null=True)
     arrival_time = serializers.DateTimeField()
     status = serializers.CharField()
     kin_name = serializers.CharField(allow_blank=True)
@@ -69,7 +67,6 @@ class InvoiceHistorySerializer(serializers.Serializer):
 
 class VisitClinicalHistorySerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    registration_number = serializers.CharField(allow_null=True)
     arrival_time = serializers.DateTimeField()
     status = serializers.CharField()
     doctor_name = serializers.CharField(allow_blank=True)
@@ -83,7 +80,6 @@ class VisitClinicalHistorySerializer(serializers.Serializer):
 
 class VisitAdminHistorySerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    registration_number = serializers.CharField(allow_null=True)
     arrival_time = serializers.DateTimeField()
     status = serializers.CharField()
     doctor_name = serializers.CharField(allow_blank=True)

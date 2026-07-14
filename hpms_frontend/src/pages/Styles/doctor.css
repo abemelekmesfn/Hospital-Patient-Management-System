@@ -1,3 +1,34 @@
+.doctor-toast {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #2e7d32;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.mobile-back-btn {
+  display: none;
+  background: #1a237e;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
 .doctor-container {
   display: flex;
   flex: 1;
@@ -738,4 +769,215 @@ textarea {
 
 .doctor-lab-mini-table th {
   background: #f5f5f5;
+}
+
+/* Nurse Features */
+.nurse-assigned-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #bbf7d0;
+}
+
+.view-nurse-data-btn {
+  position: relative;
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-nurse-data-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.nurse-unread-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.nurse-toast-stack {
+  bottom: 90px;
+}
+
+.nurse-alert {
+  border-left: 4px solid #10b981;
+}
+
+.nurse-alert .doctor-lab-toast-body strong {
+  color: #10b981;
+}
+
+@media (max-width: 920px) {
+  .doctor-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .mobile-back-btn {
+    display: inline-block;
+  }
+
+  .doctor-left,
+  .doctor-center,
+  .doctor-right {
+    width: 100%;
+    border: none;
+    overflow-y: visible;
+  }
+
+  .doctor-left {
+    max-height: none;
+  }
+
+  .doctor-container.mobile-show-queue .doctor-center,
+  .doctor-container.mobile-show-queue .doctor-right {
+    display: none;
+  }
+
+  .doctor-container.mobile-hide-queue .doctor-left {
+    display: none;
+  }
+
+  .doctor-right {
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+  }
+
+  .doctor-lab-mini-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .templates {
+    gap: 4px;
+  }
+}
+
+/* ── Admission styles ── */
+.queue-tag-admitted {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid rgba(30, 64, 175, 0.25);
+}
+
+.admit-btn {
+  width: 100%;
+  padding: 14px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admit-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.admit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.discharge-btn {
+  width: 100%;
+  padding: 14px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.discharge-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.discharge-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admission-info-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.admission-info-box h3 {
+  margin: 0 0 10px;
+  color: #1e40af;
+  font-size: 15px;
+}
+
+.admission-info-box p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #1e3a5f;
+}
+
+.exam-history {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.exam-history h4 {
+  margin: 0 0 10px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.exam-entry {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.exam-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.exam-doctor {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.exam-entry p {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
 }
