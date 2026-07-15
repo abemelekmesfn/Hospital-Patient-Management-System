@@ -99,9 +99,9 @@ WSGI_APPLICATION = 'hpms_backend.wsgi.application'
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "https://hospitalpatientsmanagementsystem.netlify.app/"
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "https://hospitalpatientsmanagementsystem.netlify.app/"
+# ]
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
