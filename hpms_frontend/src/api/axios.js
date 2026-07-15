@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/",
+  baseURL: "https://hpms-backend-kf89.onrender.com/api",
 });
 
 // Add access token to each request if available
@@ -35,7 +35,7 @@ API.interceptors.response.use(
       }
 
       try {
-        const refreshRes = await axios.post("http://127.0.0.1:8000/api/token/refresh/", {
+        const refreshRes = await axios.post("https://hpms-backend-kf89.onrender.com/api/token/refresh/", {
           refresh: refreshToken,
         });
 

@@ -54,10 +54,10 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      final res = await ApiService.instance.post('login/', data: {
-        'username': user,
-        'password': pass,
-      });
+      final res = await ApiService.instance.post(
+        'login/',
+        data: {'username': user, 'password': pass},
+      );
 
       final data = res.data as Map<String, dynamic>;
       final prefs = await SharedPreferences.getInstance();
@@ -114,5 +114,3 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-

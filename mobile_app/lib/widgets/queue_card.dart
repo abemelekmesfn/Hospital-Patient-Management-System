@@ -113,18 +113,39 @@ class QueueCard extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: AppColors.blueBg,
-                                      border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.3)),
+                                      border: Border.all(
+                                        color: AppColors.accentBlue.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      ),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: const Text('🏥 Admitted', style: TextStyle(color: AppColors.accentBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                                    child: const Text(
+                                      '🏥 Admitted',
+                                      style: TextStyle(
+                                        color: AppColors.accentBlue,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                   if (tasks.first.wardName != null) ...[
                                     const SizedBox(width: 8),
-                                    Text('${tasks.first.wardName} - Bed ${tasks.first.bedNumber}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
-                                  ]
+                                    Text(
+                                      '${tasks.first.wardName} - Bed ${tasks.first.bedNumber}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

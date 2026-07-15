@@ -92,6 +92,6 @@ class ApiConfig {
   /// For Android emulator → host machine localhost.
   /// For Web → use localhost directly.
   /// Change to your LAN IP for physical devices (e.g. '192.168.x.x').
-  static const String baseUrl = kIsWeb ? 'http://localhost:8000/api/' : 'http://10.0.2.2:8000/api/';
-  static const String tokenRefreshUrl = kIsWeb ? 'http://localhost:8000/api/token/refresh/' : 'http://10.0.2.2:8000/api/token/refresh/';
+  static const String baseUrl = kIsWeb ? 'https://hpms-backend-kf89.onrender.com/api/' : 'http://10.0.2.2:8000/api/';
+  static const String tokenRefreshUrl = kIsWeb ? 'https://hpms-backend-kf89.onrender.com/api/token/refresh/' : 'https://hpms-backend-kf89.onrender.com/api/token/refresh/';
 }
