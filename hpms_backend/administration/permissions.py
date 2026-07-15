@@ -7,13 +7,13 @@ class IsAuthenticatedAdmin(BasePermission):
     message = "Admin authentication required."
 
     def has_permission(self, request, view):
-        user = request.user
-        return bool(
-            user
-            and user.is_authenticated
-            and user.is_active
-            and getattr(user, "role", None) == "ADMIN"
-        )
+        if not request.user.is_authenticated:
+            return False
+
+        if request.user.is_superuser:
+            return True
+
+        return (request.user.role or "").upper() == "ADMIN"
 
 
 class IsAdminOrReadOnly(BasePermission):
