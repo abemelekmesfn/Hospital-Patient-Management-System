@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'nurse',
     "billing",
     "administration",
+    'django.contrib.staticfiles',
 ]
 
 MIDDLEWARE = [
