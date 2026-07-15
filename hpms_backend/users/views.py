@@ -49,10 +49,15 @@ def login_view(request):
 
         refresh = RefreshToken.for_user(user)
 
+        user_data = UserSerializer(user).data
+
+        if user.is_superuser:
+            user_data["role"] = "ADMIN"
+
         response = Response({
             "refresh": str(refresh),
             "access": str(refresh.access_token),
-            "user": UserSerializer(user).data
+            "user": user_data
         })
         
         # Add CORS headers manually
